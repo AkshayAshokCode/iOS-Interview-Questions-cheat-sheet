@@ -4,6 +4,8 @@ A revision guide for iOS developer interviews: **490+ questions with interview-r
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
+> **📈 [Open the interactive study tracker](https://akshayashokcode.github.io/iOS-Interview-Questions-cheat-sheet/)**: mark questions ✓ Done or ↻ Revise, see your progress per topic and category, search every question, and continue where you left off. Progress is saved in your browser (export/import to move it between devices).
+
 > Companion repo: [Android Interview Questions – Cheat Sheet](https://github.com/AkshayAshokCode/Android-Interview-Questions-cheat-sheet)
 
 ---
