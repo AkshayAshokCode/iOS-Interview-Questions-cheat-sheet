@@ -234,6 +234,41 @@ The **local store is the source of truth**: the UI observes the database (`@Quer
 
 </details>
 
+
+### 18. What is NSFetchRequest? How do NSPredicate and NSSortDescriptor work?
+
+<details>
+<summary>Answer</summary>
+
+An **`NSFetchRequest<T>`** describes **what to fetch** from Core Data: an entity, plus:
+- **`predicate`** (`NSPredicate`) – filtering, e.g. `NSPredicate(format: "age >= %d AND name CONTAINS[cd] %@", 18, query)` (`[cd]` = case- and diacritic-insensitive). Always use format arguments (`%@`), never string concatenation.
+- **`sortDescriptors`** (`NSSortDescriptor(keyPath: \User.name, ascending: true)`) – ordering. Also used for sorting plain arrays (`NSArray.sortedArray(using:)`). The Swift-native equivalent is `SortDescriptor` / `KeyPathComparator`.
+- `fetchLimit`, `fetchOffset` (paging), **`fetchBatchSize`** (loads objects in batches, saving memory), `propertiesToFetch`, `resultType` (`.countResultType`, `.dictionaryResultType`), `relationshipKeyPathsForPrefetching`.
+
+Run it with `try context.fetch(request)` inside the context's queue. SwiftData uses `FetchDescriptor` + `#Predicate` instead.
+
+</details>
+
+### 19. When would you use Core Data instead of UserDefaults? How do you persist an array of custom objects?
+
+<details>
+<summary>Answer</summary>
+
+Use **Core Data/SwiftData** when the data is **structured, large, relational or queried** (filtering, sorting, paging), changes often, or needs migrations or sync. Use **UserDefaults** for **small settings and flags** only, since the whole plist is loaded into memory at launch.
+
+To persist an array of custom objects **simply** (small to medium size):
+
+```swift
+struct Note: Codable { let id: UUID; var text: String }
+let url = URL.applicationSupportDirectory.appending(path: "notes.json")
+try JSONEncoder().encode(notes).write(to: url, options: .atomic)
+let loaded = try JSONDecoder().decode([Note].self, from: Data(contentsOf: url))
+```
+
+Create the directory if it doesn't exist. For larger or queryable data, move to SwiftData, Core Data or GRDB.
+
+</details>
+
 ---
 
 [⬅ Previous: Networking](13-networking.md) · [⬅ Back to index](../README.md) · [Next: Background Tasks & Notifications ➡](15-background-notifications.md)

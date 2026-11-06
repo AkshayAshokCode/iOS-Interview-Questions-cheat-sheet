@@ -221,6 +221,25 @@ In Apple's MVC, the view controller tends to take on networking, data formatting
 
 </details>
 
+
+### 17. What is KVC (Key-Value Coding)?
+
+<details>
+<summary>Answer</summary>
+
+KVC is an Objective-C runtime mechanism to **access an object's properties indirectly by string key**: `object.value(forKey: "name")`, `setValue("A", forKey: "name")`, key paths like `"address.city"`, and collection operators like `"@sum.price"` and `"@avg.age"`. It requires `NSObject` subclasses and `@objc` properties. It's the foundation of **KVO**, Core Data's `NSManagedObject` and Cocoa bindings, and storyboards use it for "User Defined Runtime Attributes". A wrong key crashes with `NSUnknownKeyException` ("this class is not key value coding-compliant"), which is a classic IBOutlet crash. In Swift, prefer type-safe **key paths** (`\User.name`).
+
+</details>
+
+### 18. In MVC, where should the networking/download code go?
+
+<details>
+<summary>Answer</summary>
+
+**Not in the view controller, and not in the view.** Put it in a **model-layer service** (an `APIClient`/`Repository`) that the controller calls. The service fetches and parses the data into model objects and returns them (async/await or a completion handler). The controller then updates the view. This keeps view controllers thin and lets you test the networking separately. In MVVM, the view model calls the service.
+
+</details>
+
 ---
 
 [⬅ Previous: Combine](06-combine.md) · [⬅ Back to index](../README.md) · [Next: iOS Fundamentals ➡](08-ios-fundamentals.md)

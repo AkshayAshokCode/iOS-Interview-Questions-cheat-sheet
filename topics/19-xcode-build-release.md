@@ -189,6 +189,31 @@ StoreKit 2 is the Swift-concurrency based in-app purchase API (iOS 15+): `Produc
 
 </details>
 
+
+### 17. Development vs distribution certificates? What is an App ID?
+
+<details>
+<summary>Answer</summary>
+
+- **Apple Development certificate** – signs builds that run on **registered devices** from Xcode (debugging). Each developer can have their own.
+- **Apple Distribution certificate** – signs builds for **App Store/TestFlight, Ad Hoc and Enterprise** distribution. It's usually shared by the team or CI (via fastlane match, or cloud-managed signing in Xcode).
+- **App ID** – the identifier registered in the developer portal: the **Team ID prefix + bundle ID** (explicit, `com.company.app`, or wildcard `com.company.*`, which can't use most capabilities). It defines the enabled **capabilities** (push, iCloud, App Groups, Sign in with Apple…).
+- Push notifications now usually use a team-wide **APNs auth key (.p8)** instead of per-app push certificates.
+
+</details>
+
+### 18. What Git workflow questions come up? (merge vs rebase, branching, project file conflicts)
+
+<details>
+<summary>Answer</summary>
+
+- **Merge vs rebase:** `merge` preserves history (merge commits), and it's safe on shared branches. `rebase` rewrites commits for a linear history. **Never rebase commits that are already shared.** Squash-merge PRs to keep `main` clean.
+- **Branching:** trunk-based development (short-lived branches + feature flags), GitHub Flow, or Git Flow (release/hotfix branches, common for versioned App Store releases).
+- **Useful commands:** `stash`, `cherry-pick` (hotfix onto a release branch), `bisect` (find the commit that introduced a regression), `reflog` (recovery), `revert` vs `reset`.
+- **iOS-specific:** `.pbxproj` **merge conflicts**. Mitigate them with **Xcode 16 synchronized folders** (buildable folders don't list each file in the project file), project generators (**Tuist/XcodeGen**), or SPM packages for most code. Also: a `.gitignore` for `xcuserdata`/DerivedData, and committing `Package.resolved`.
+
+</details>
+
 ---
 
 [⬅ Previous: Security & Privacy](18-security-privacy.md) · [⬅ Back to index](../README.md) · [Next: iOS System Design ➡](20-system-design.md)

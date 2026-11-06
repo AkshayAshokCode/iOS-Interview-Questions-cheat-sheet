@@ -365,6 +365,128 @@ See [What's New](21-whats-new-trending.md).
 
 </details>
 
+
+---
+
+## More SwiftUI Questions
+
+### 25. What is the difference between a view's initializer, `onAppear()` and `.task`?
+
+<details>
+<summary>Answer</summary>
+
+- **`init`** – runs **every time the parent's body is re-evaluated**, which can be very often, even if the view isn't on screen yet (e.g. `NavigationLink` destinations in older APIs, `List` rows). Keep it trivial: only assign properties. **Never** start network calls or heavy work there.
+- **`onAppear`** – runs when the view **appears on screen**. It can run **multiple times** (tab switches, navigation pops). It's synchronous.
+- **`.task { }`** – like `onAppear`, but runs an **async** operation that's **cancelled automatically** when the view disappears. `.task(id:)` restarts when the ID changes. This is the preferred place to load data.
+
+</details>
+
+### 26. How does an `ObservableObject` announce changes to SwiftUI?
+
+<details>
+<summary>Answer</summary>
+
+`ObservableObject` has an **`objectWillChange`** publisher (an `ObservableObjectPublisher`). SwiftUI subscribes to it for every `@StateObject`/`@ObservedObject`/`@EnvironmentObject`.
+- **`@Published`** properties automatically call `objectWillChange.send()` in their **`willSet`**.
+- You can also call `objectWillChange.send()` **manually** before mutating non-published state (e.g. computed properties backed by other storage).
+- It fires **before** the change, and SwiftUI schedules a re-render on the next update. Any change invalidates **all** views observing the object, which is the main performance difference compared with `@Observable`'s per-property tracking.
+- Changes must happen on the **main thread** (mark the class `@MainActor`).
+
+</details>
+
+### 27. What are ButtonStyle and other style protocols? How do you create reusable modifiers?
+
+<details>
+<summary>Answer</summary>
+
+**Style protocols** separate a control's **behaviour** from its **appearance**: `ButtonStyle` (full custom look, with access to `configuration.isPressed`), `PrimitiveButtonStyle` (custom interaction too), `ToggleStyle`, `LabelStyle`, `TextFieldStyle`, `ProgressViewStyle`, `ListStyle` and so on.
+
+```swift
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding().frame(maxWidth: .infinity)
+            .background(.blue, in: .rect(cornerRadius: 12)).foregroundStyle(.white)
+            .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
+extension ButtonStyle where Self == PrimaryButtonStyle { static var primary: Self { .init() } }
+Button("Continue") { }.buttonStyle(.primary)    // applies to all buttons in a subtree if set on a container
+```
+
+For general reuse, use a **`ViewModifier`** + `View` extension (`.cardStyle()`). Styles are the basis of a SwiftUI **design system**.
+
+</details>
+
+### 28. When should you use GeometryReader? What are the alternatives?
+
+<details>
+<summary>Answer</summary>
+
+`GeometryReader` gives you the **proposed size and coordinates** of its container (`proxy.size`, `proxy.frame(in: .global)`, safe area insets). Use it for layouts that genuinely depend on the available space (proportional sizing, custom charts, parallax).
+
+**Drawbacks:** it **expands to take all the space offered**, which breaks layouts, and overusing it hurts performance and readability.
+
+**Modern alternatives:**
+- `containerRelativeFrame` (iOS 17) for proportional sizing.
+- `ViewThatFits` to pick the layout that fits.
+- The **`Layout` protocol** for custom layouts.
+- `onGeometryChange(for:of:action:)` (iOS 18) to **read** a size without affecting layout.
+- `.visualEffect { content, proxy in }` for geometry-based effects.
+- `scrollTransition` for scroll-based effects.
+
+</details>
+
+### 29. How do you handle forms, focus and the keyboard in SwiftUI?
+
+<details>
+<summary>Answer</summary>
+
+```swift
+enum Field { case email, password }
+@FocusState private var focused: Field?
+
+Form {
+    TextField("Email", text: $email)
+        .textContentType(.emailAddress).keyboardType(.emailAddress)
+        .textInputAutocapitalization(.never).autocorrectionDisabled()
+        .focused($focused, equals: .email).submitLabel(.next)
+        .onSubmit { focused = .password }
+    SecureField("Password", text: $password)
+        .focused($focused, equals: .password).submitLabel(.go)
+        .onSubmit(login)
+}
+.toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { focused = nil } } }
+.scrollDismissesKeyboard(.interactively)
+```
+
+Use `textContentType` for **AutoFill** (passwords, one-time codes: `.oneTimeCode`). SwiftUI avoids the keyboard automatically through the keyboard safe area (`.ignoresSafeArea(.keyboard)` to opt out). Validate in the model and show inline errors.
+
+</details>
+
+### 30. How do you present alerts, sheets and dialogs in SwiftUI?
+
+<details>
+<summary>Answer</summary>
+
+Presentations are **state-driven**: you bind them to state instead of calling `present()`:
+
+```swift
+@State private var selectedItem: Item?          // item-based → sheet shows when non-nil
+.sheet(item: $selectedItem) { item in DetailView(item: item) }
+.sheet(isPresented: $showSettings) { SettingsView().presentationDetents([.medium, .large]) }
+.fullScreenCover(isPresented: $showOnboarding) { OnboardingView() }
+.alert("Delete item?", isPresented: $showDelete, presenting: item) { item in
+    Button("Delete", role: .destructive) { delete(item) }
+} message: { item in Text(item.name) }
+.confirmationDialog("Options", isPresented: $showOptions) { … }
+.popover(isPresented: $showTip) { TipView() }
+```
+
+Prefer **item-based** APIs when the presentation needs data (it avoids stale-data bugs). Dismiss from inside with `@Environment(\.dismiss)`. Customize sheets with `presentationDetents`, `presentationDragIndicator` and `interactiveDismissDisabled`.
+
+</details>
+
 ---
 
 [⬅ Previous: UIKit](09-uikit.md) · [⬅ Back to index](../README.md) · [Next: Architecture ➡](11-architecture.md)

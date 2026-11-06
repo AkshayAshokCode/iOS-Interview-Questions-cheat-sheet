@@ -1,6 +1,6 @@
 # iOS Interview Questions – Cheat Sheet
 
-A revision guide for iOS developer interviews: **390+ questions with interview-ready answers**, split into 22 topics. It covers Swift, concurrency, UIKit and SwiftUI, architecture, system design and what's new in iOS 26 and Swift 6.
+A revision guide for iOS developer interviews: **490+ questions with interview-ready answers**, split into 24 topics. It covers Swift, concurrency, UIKit and SwiftUI, architecture, system design and what's new in iOS 26 and Swift 6.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
@@ -24,15 +24,16 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 01 | [Swift Fundamentals](topics/01-swift-basics.md) | 30 | Struct vs class, CoW, optionals, closures, escaping, enums, errors, access control |
-| 02 | [Swift Advanced](topics/02-swift-advanced.md) | 25 | POP, associated types, `some` vs `any`, generics, dispatch, property wrappers, macros, Codable |
+| 01 | [Swift Fundamentals](topics/01-swift-basics.md) | 43 | Struct vs class, CoW, optionals, closures, escaping, enums, errors, access control |
+| 02 | [Swift Advanced](topics/02-swift-advanced.md) | 31 | POP, associated types, `some` vs `any`, generics, dispatch, property wrappers, macros, Codable |
 | 03 | [Memory Management (ARC)](topics/03-memory-management.md) | 15 | ARC, strong/weak/unowned, retain cycles, closures & delegates, leak detection |
+| 23 | [Objective-C Essentials](topics/23-objective-c.md) | 16 | Messaging & runtime, property attributes, categories, blocks, MRC/ARC, KVC/KVO, Swift interop |
 
 ### 🔵 Concurrency
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 04 | [GCD, Operations & Thread Safety](topics/04-gcd-operations.md) | 17 | Queues, sync/async, deadlocks, DispatchGroup, barriers, OperationQueue, locks, RunLoop |
+| 04 | [GCD, Operations & Thread Safety](topics/04-gcd-operations.md) | 19 | Queues, sync/async, deadlocks, DispatchGroup, barriers, OperationQueue, locks, RunLoop |
 | 05 | [Swift Concurrency](topics/05-swift-concurrency.md) | 21 | async/await, Task, TaskGroup, cancellation, actors, MainActor, Sendable, Swift 6/6.2 |
 | 06 | [Combine](topics/06-combine.md) | 16 | Publishers, subjects, @Published, operators, schedulers, errors, Combine vs async/await |
 
@@ -40,42 +41,43 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 07 | [OOP, SOLID & Design Patterns](topics/07-oop-solid-design-patterns.md) | 16 | SOLID, delegation, KVO, NotificationCenter, singleton, coordinator, responder chain |
-| 08 | [iOS Fundamentals](topics/08-ios-fundamentals.md) | 17 | App states, AppDelegate vs SceneDelegate, launch sequence, sandbox, universal links |
+| 07 | [OOP, SOLID & Design Patterns](topics/07-oop-solid-design-patterns.md) | 18 | SOLID, delegation, KVO, NotificationCenter, singleton, coordinator, responder chain |
+| 08 | [iOS Fundamentals](topics/08-ios-fundamentals.md) | 26 | App states, AppDelegate vs SceneDelegate, launch sequence, sandbox, universal links |
 
 ### 🟠 UI
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 09 | [UIKit](topics/09-uikit.md) | 27 | VC lifecycle, layout cycle, Auto Layout, cell reuse, diffable data sources, animations |
-| 10 | [SwiftUI](topics/10-swiftui.md) | 24 | View identity, @State/@Binding/@Observable, data flow, NavigationStack, performance |
+| 09 | [UIKit](topics/09-uikit.md) | 39 | VC lifecycle, layout cycle, Auto Layout, cell reuse, diffable data sources, animations |
+| 10 | [SwiftUI](topics/10-swiftui.md) | 30 | View identity, @State/@Binding/@Observable, data flow, NavigationStack, performance |
+| 24 | [Accessibility & Localization](topics/24-accessibility-localization.md) | 10 | VoiceOver, Dynamic Type, SwiftUI accessibility, audits, String Catalogs, formatting, RTL |
 
 ### 🟡 Architecture & Data
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 11 | [App Architecture](topics/11-architecture.md) | 15 | MVC, MVVM, VIPER, Clean, TCA, coordinators, UDF, modularization |
+| 11 | [App Architecture](topics/11-architecture.md) | 16 | MVC, MVVM, VIPER, Clean, TCA, coordinators, UDF, modularization |
 | 12 | [DI, SPM & Modularization](topics/12-dependency-injection-modularization.md) | 14 | DI types, composition root, SPM vs CocoaPods, static vs dynamic, XCFrameworks |
-| 13 | [Networking](topics/13-networking.md) | 17 | URLSession, network layer design, Codable, token refresh, caching, pinning |
-| 14 | [Data Persistence](topics/14-data-persistence.md) | 17 | UserDefaults, Keychain, Core Data stack & concurrency, SwiftData, CloudKit |
+| 13 | [Networking](topics/13-networking.md) | 20 | URLSession, network layer design, Codable, token refresh, caching, pinning |
+| 14 | [Data Persistence](topics/14-data-persistence.md) | 19 | UserDefaults, Keychain, Core Data stack & concurrency, SwiftData, CloudKit |
 | 15 | [Background Tasks & Notifications](topics/15-background-notifications.md) | 14 | BGTaskScheduler, APNs flow, silent push, notification extensions, Live Activities |
 
 ### 🔴 Quality, Security & Delivery
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 16 | [Performance & Instruments](topics/16-performance.md) | 13 | Launch time, hangs, hitches, image memory, Instruments, MetricKit, crashes |
-| 17 | [Testing](topics/17-testing.md) | 15 | XCTest, Swift Testing, mocks, async tests, URLProtocol, XCUITest, snapshots |
-| 18 | [Security & Privacy](topics/18-security-privacy.md) | 17 | Keychain, Secure Enclave, biometrics, App Attest, ATT, privacy manifests, passkeys |
-| 19 | [Xcode, Build & Release](topics/19-xcode-build-release.md) | 16 | Schemes/configs, code signing, TestFlight, App Review, phased release, CI/CD, StoreKit 2 |
+| 16 | [Performance & Instruments](topics/16-performance.md) | 14 | Launch time, hangs, hitches, image memory, Instruments, MetricKit, crashes |
+| 17 | [Testing](topics/17-testing.md) | 16 | XCTest, Swift Testing, mocks, async tests, URLProtocol, XCUITest, snapshots |
+| 18 | [Security & Privacy](topics/18-security-privacy.md) | 19 | Keychain, Secure Enclave, biometrics, App Attest, ATT, privacy manifests, passkeys |
+| 19 | [Xcode, Build & Release](topics/19-xcode-build-release.md) | 18 | Schemes/configs, code signing, TestFlight, App Review, phased release, CI/CD, StoreKit 2 |
 
 ### ⭐ Interview Rounds
 
 | # | Topic | Questions | Key areas |
 |---|---|---|---|
-| 20 | [iOS System Design](topics/20-system-design.md) | 12 | Framework + designs: image cache, feed, chat, offline sync, downloader, analytics SDK |
-| 21 | [What's New & Trending](topics/21-whats-new-trending.md) | 15 | iOS 17/18/26, Liquid Glass, Foundation Models, App Intents, Swift 6.2, policies |
-| 22 | [Coding, Scenarios & Behavioral](topics/22-coding-scenarios.md) | 19 | LRU cache, debounce, parallel fetch, find-the-bug, STAR answers |
+| 20 | [iOS System Design](topics/20-system-design.md) | 16 | Framework + designs: image cache, feed, chat, offline sync, downloader, analytics SDK |
+| 21 | [What's New & Trending](topics/21-whats-new-trending.md) | 17 | iOS 17/18/26, Liquid Glass, Foundation Models, App Intents, Swift 6.2, policies |
+| 22 | [Coding, Scenarios & Behavioral](topics/22-coding-scenarios.md) | 24 | LRU cache, debounce, parallel fetch, find-the-bug, STAR answers |
 
 ---
 
@@ -87,12 +89,12 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 |---|---|
 | 1 | 01 Swift Fundamentals |
 | 2 | 02 Swift Advanced |
-| 3 | 03 Memory Management + 07 OOP & Patterns |
+| 3 | 03 Memory Management + 07 OOP & Patterns + 23 Objective-C (if the role uses it) |
 | 4 | 04 GCD & Operations |
 | 5 | 05 Swift Concurrency |
 | 6 | 06 Combine + 08 iOS Fundamentals |
 | 7 | 09 UIKit |
-| 8 | 10 SwiftUI |
+| 8 | 10 SwiftUI + 24 Accessibility & Localization |
 | 9 | 11 Architecture + 12 DI & SPM |
 | 10 | 13 Networking + 14 Persistence |
 | 11 | 15 Background & Notifications + 16 Performance |

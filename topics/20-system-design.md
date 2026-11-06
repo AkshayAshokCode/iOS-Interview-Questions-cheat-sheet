@@ -180,6 +180,72 @@ The backend exposes a **minimum supported app version** (and a recommended one).
 
 </details>
 
+
+---
+
+## More System Design Problems
+
+### 13. Design Instagram Stories (iOS).
+
+<details>
+<summary>Answer</summary>
+
+**Requirements:** a tray of users with unseen/seen rings; a full-screen viewer that auto-advances (~5 s per image, video length for video); tap to go back or forward, long-press to pause, swipe between users; 24 h expiry; it should feel instant.
+
+- **API:** `GET /stories/tray` with story metadata (multiple media resolutions from a CDN, durations, `seen`, `expiresAt`). Cache it locally (SwiftData or a file) for an instant tray on launch.
+- **Preloading is key:** prefetch the **next 1–2 stories' media**, and the first story of the next user. Images: download + **downsample** to screen size and decode in the background. Video: `AVPlayerItem` preloading/`preferredForwardBufferDuration`, or `AVAssetDownloadURLSession` for caching.
+- **Viewer:** a horizontal paging container (a `UIPageViewController`, a collection view, or `TabView(.page)` / a SwiftUI `ScrollView` with `.scrollTargetBehavior(.paging)`). Per user, segmented progress bars driven by a **timer/CADisplayLink** that pauses on touch-down, when the app goes inactive, and during buffering. A **single reused `AVPlayer`** (or a small pool).
+- **Seen state:** mark it locally right away and sync in batches (a queue that works offline).
+- **Memory:** release off-screen players and images, use `NSCache` limits, and clear on memory warnings.
+- **Edge cases:** expired stories, network loss mid-story (show a retry), accessibility (VoiceOver reading the author and time, pausing auto-advance for VoiceOver users), analytics batching.
+
+</details>
+
+### 14. Design a networking library for iOS.
+
+<details>
+<summary>Answer</summary>
+
+- **Public API:** `func send<T: Decodable>(_ endpoint: Endpoint<T>) async throws -> T`, with endpoints as values (path, method, query, headers, body, decoder).
+- **Request pipeline (Chain of Responsibility):** request **adapters** (auth headers, user agent, signing) → transport (`URLSession`) → response **validators** (status codes) → **retriers** (exponential backoff with jitter for transient errors, a 401 → token refresh through an actor with a single in-flight refresh) → **decoders**.
+- **Concurrency:** async/await, `Sendable` types, cancellation propagated from Task to `URLSessionTask`, optional request deduplication (an actor keyed by request).
+- **Caching:** `URLCache` policies + an optional custom response cache with TTL.
+- **Errors:** a typed `NetworkError` (offline, timeout, unauthorized, server(code), decoding) with the underlying error attached.
+- **Observability:** pluggable loggers/metrics (`URLSessionTaskMetrics`), redacting sensitive headers.
+- **Testability:** protocol-based transport (a `URLProtocol` stub or an injected session), fixtures.
+- **Packaging:** an SPM package, no third-party dependencies, documented API, semantic versioning.
+
+</details>
+
+### 15. Design a ride-hailing app (rider side, like Uber).
+
+<details>
+<summary>Answer</summary>
+
+- **Flows:** set pickup/drop-off (MapKit search, `MKLocalSearchCompleter`) → fare estimate → request → driver matched → **live tracking** → trip → payment (Apple Pay) and rating.
+- **Location:** Core Location `CLLocationUpdate.liveUpdates()`, with **When In Use** authorization (riders rarely need Always). Increase accuracy only during active states.
+- **Real-time:** a **WebSocket** during an active trip (driver location every few seconds, ETA, state changes); **APNs** for trip events when backgrounded; a **Live Activity** (Dynamic Island / Lock Screen) showing the driver's ETA, updated through ActivityKit push.
+- **Map:** smooth marker animation between updates (interpolate the coordinate and heading), route polylines (`MKDirections` or server-provided).
+- **State machine:** `idle → searching → driverAssigned → arriving → onTrip → completed`, owned by an actor/store and **restored on relaunch** (the server is authoritative, re-synced on reconnect).
+- **Reliability:** idempotent ride requests (client UUID), reconnection with backoff, graceful offline states.
+- **Battery and privacy:** stop high-frequency location after the trip, minimize data collected, and write clear permission prompts.
+
+</details>
+
+### 16. How do voice and video calls work in an iOS app?
+
+<details>
+<summary>Answer</summary>
+
+- **Media:** **WebRTC** (P2P, encrypted SRTP over UDP, Opus/H.264/VP8 codecs), with **STUN** for NAT discovery and **TURN** relays as a fallback. Group calls use an **SFU** server.
+- **Signaling:** your own server (WebSocket) exchanges SDP offers/answers and ICE candidates.
+- **Incoming calls when the app isn't running:** a **PushKit VoIP push** wakes the app, which **must immediately report the call to CallKit** (`CXProvider.reportNewIncomingCall`), or iOS terminates the app and may stop delivering VoIP pushes.
+- **CallKit** gives the native call UI (lock screen, Recents, Bluetooth/CarPlay integration). **LiveCommunicationKit** (iOS 17.4+) is an alternative in regions where CallKit is restricted.
+- **Audio:** `AVAudioSession` category `.playAndRecord`, mode `.voiceChat`/`.videoChat`, handling route changes (speaker, AirPods) and interruptions. Background modes: **Voice over IP** and **Audio**.
+- **Video:** camera capture (AVFoundation), **Picture in Picture** for video calls (`AVPictureInPictureController.ContentSource` with a sample buffer display layer).
+
+</details>
+
 ---
 
 [⬅ Previous: Xcode, Build & Release](19-xcode-build-release.md) · [⬅ Back to index](../README.md) · [Next: What's New & Trending ➡](21-whats-new-trending.md)

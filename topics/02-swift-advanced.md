@@ -348,6 +348,115 @@ default: showError()
 
 </details>
 
+
+---
+
+## More Advanced Swift
+
+### 26. What is type erasure? When would you use it?
+
+<details>
+<summary>Answer</summary>
+
+Type erasure **hides a concrete generic type behind a wrapper** with a simpler type. It was historically needed because protocols with associated types couldn't be used as variable types.
+
+Examples: `AnyPublisher<Output, Failure>` (hides long Combine operator chains), `AnyView`, `AnyHashable`, `AnySequence`, `AnyCancellable`.
+
+```swift
+struct AnyRepository<Item>: Repository {
+    private let _fetchAll: () async throws -> [Item]
+    init<R: Repository>(_ base: R) where R.Item == Item { _fetchAll = base.fetchAll }
+    func fetchAll() async throws -> [Item] { try await _fetchAll() }
+}
+```
+
+**Modern Swift:** `any Repository<User>` (primary associated types, Swift 5.7) often replaces hand-written erasers. Use `some` when the concrete type can stay hidden but fixed. Type erasure costs some performance (indirection, no specialization).
+
+</details>
+
+### 27. What are conditional conformances?
+
+<details>
+<summary>Answer</summary>
+
+A generic type conforms to a protocol **only when its type parameters meet a condition**:
+
+```swift
+extension Array: Equatable where Element: Equatable { }   // standard library
+extension Box: Codable where Value: Codable { }
+```
+
+That's why `[Int]` is Equatable but `[UIView]` isn't Hashable, and why `Optional` is Equatable only when its `Wrapped` type is.
+
+</details>
+
+### 28. What is operator overloading? How do you create custom operators?
+
+<details>
+<summary>Answer</summary>
+
+**Operator overloading** gives existing operators meaning for your types:
+
+```swift
+struct Vector { var x, y: Double }
+extension Vector {
+    static func + (l: Vector, r: Vector) -> Vector { Vector(x: l.x + r.x, y: l.y + r.y) }
+    static func += (l: inout Vector, r: Vector) { l = l + r }
+}
+```
+
+**Custom operators:** declare them with `prefix`, `infix` or `postfix operator`, and optionally a **precedence group**: `infix operator **: MultiplicationPrecedence`. Use them sparingly; overly clever operators hurt readability.
+
+</details>
+
+### 29. What are phantom types?
+
+<details>
+<summary>Answer</summary>
+
+A phantom type is a generic parameter that's **never used in the stored data**. It exists only to add **compile-time type safety**:
+
+```swift
+struct ID<Entity>: Hashable { let raw: String }
+enum UserTag {}; enum OrderTag {}
+func loadUser(_ id: ID<UserTag>) { }
+let orderID = ID<OrderTag>(raw: "o1")
+loadUser(orderID)   // ❌ compile error – can't mix up IDs
+```
+
+Other uses: units of measure (`Length<Meters>`) and state machines encoded in types (`Request<Unvalidated>` → `Request<Validated>`).
+
+</details>
+
+### 30. What are ABI stability and module stability?
+
+<details>
+<summary>Answer</summary>
+
+- **ABI stability** (Swift 5.0, 2019): the binary interface (calling conventions, memory layout, the runtime) is stable on Apple platforms. The **Swift runtime ships with the OS**, so apps no longer bundle the Swift libraries. Apps are smaller and launch faster, and binaries built with different Swift versions interoperate.
+- **Module stability** (Swift 5.1): `.swiftinterface` files let a **binary framework built with one compiler version be used by a newer compiler**, which is essential for distributing closed-source XCFrameworks (enable "Build Libraries for Distribution" = **library evolution**).
+
+</details>
+
+### 31. What is functional programming in Swift? FP vs OOP?
+
+<details>
+<summary>Answer</summary>
+
+**Functional programming** builds programs from **pure functions** (no side effects; same input gives the same output), **immutable data**, and **higher-order functions** (functions taking or returning functions).
+
+Swift supports FP well: closures, `map`/`filter`/`reduce`/`compactMap`, value types, `let`, `Result`, function composition, and SwiftUI's declarative views (UI = f(state)). Reducers in TCA/Redux are pure functions.
+
+| OOP | FP |
+|---|---|
+| Objects bundle state + behaviour | Data and functions are separate |
+| Mutable state, encapsulated | Immutable data, transformations |
+| Polymorphism through inheritance/protocols | Composition of functions |
+
+In practice Swift is **multi-paradigm**: use FP for data transformations and business logic (easy to test), and objects or protocols for structure and identity.
+
+</details>
+
 ---
 
 [⬅ Previous: Swift Fundamentals](01-swift-basics.md) · [⬅ Back to index](../README.md) · [Next: Memory Management ➡](03-memory-management.md)

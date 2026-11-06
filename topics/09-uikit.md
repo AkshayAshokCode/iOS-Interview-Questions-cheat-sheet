@@ -344,6 +344,167 @@ This is the standard approach for incremental migration.
 
 </details>
 
+
+---
+
+## More UIKit Questions
+
+### 28. How do you add a shadow and rounded corners to the same view?
+
+<details>
+<summary>Answer</summary>
+
+```swift
+view.layer.cornerRadius = 12
+view.layer.cornerCurve = .continuous
+view.layer.shadowColor = UIColor.black.cgColor
+view.layer.shadowOpacity = 0.15
+view.layer.shadowOffset = CGSize(width: 0, height: 4)
+view.layer.shadowRadius = 8
+view.layer.shadowPath = UIBezierPath(roundedRect: view.bounds, cornerRadius: 12).cgPath  // performance!
+```
+
+**The catch:** `masksToBounds = true` (`clipsToBounds`) is needed to clip subviews to the rounded corners, but it **also clips the shadow**. Solutions:
+- Use a **container view** for the shadow (`masksToBounds = false`) and an inner content view with `cornerRadius` + `clipsToBounds = true`.
+- Or, if the content doesn't need clipping, set only `cornerRadius` + a background color and no masking.
+
+Always set **`shadowPath`** (and update it in `layoutSubviews`). Without it, Core Animation computes the shadow from the layer's alpha with an expensive **off-screen render pass**. `maskedCorners` rounds only specific corners.
+
+</details>
+
+### 29. UIImage vs UIImageView? Aspect fit vs aspect fill?
+
+<details>
+<summary>Answer</summary>
+
+- **`UIImage`** – the **image data** (a model object, not a view). `UIImage(named:)` caches the image (good for assets used repeatedly); `UIImage(contentsOfFile:)` doesn't.
+- **`UIImageView`** – a **view that displays** a UIImage (and can animate a sequence of images).
+
+`contentMode`:
+- **`.scaleAspectFit`** – scales to fit **entirely inside** the bounds, preserving the aspect ratio. There may be **empty bars**.
+- **`.scaleAspectFill`** – scales to **fill** the bounds, preserving the aspect ratio. Parts of the image are **cropped**, so set `clipsToBounds = true`.
+- **`.scaleToFill`** – stretches and **distorts** the image to fill the bounds.
+- `.center`, `.top` and so on – no scaling.
+
+</details>
+
+### 30. What are segues, storyboard IDs, `@IBOutlet` and `@IBAction`?
+
+<details>
+<summary>Answer</summary>
+
+- **`@IBOutlet`** – a property connected to a view in Interface Builder (`@IBOutlet weak var titleLabel: UILabel!`). Usually `weak` (the view hierarchy owns the view), though `strong` is fine and Apple's templates use it now.
+- **`@IBAction`** – a method called when a control sends an event (`@IBAction func didTapLogin(_ sender: UIButton)`).
+- **Segue** – a storyboard-defined transition between view controllers (show/push, present modally, popover, custom, **unwind** segues for going back). Prepare data in `prepare(for:sender:)` and trigger it with `performSegue(withIdentifier:sender:)`.
+- **Storyboard ID** – an identifier used to instantiate a view controller in code: `storyboard.instantiateViewController(identifier: "Detail") { coder in DetailVC(coder: coder, item: item) }` (initializer injection, iOS 13+).
+
+Crash to know: a renamed or deleted outlet leaves a stale connection, which causes "this class is not key value coding-compliant for the key X" at runtime.
+
+</details>
+
+### 31. What are the pros and cons of `viewWithTag()`?
+
+<details>
+<summary>Answer</summary>
+
+`view.viewWithTag(42)` finds a subview by its integer tag (a recursive search).
+- **Pros:** quick for simple prototypes or a few dynamically created views without references.
+- **Cons:** **magic numbers** (fragile, no type safety, so you need casts), an O(n) recursive search, duplicate tags return the first match, and it's hard to maintain or refactor. **Prefer outlets, stored properties or custom view subclasses.**
+
+</details>
+
+### 32. How does UIScrollView work?
+
+<details>
+<summary>Answer</summary>
+
+- **`contentSize`** – the size of the scrollable content. With Auto Layout, constrain the content to the **`contentLayoutGuide`** (which defines the content size) and the width to the **`frameLayoutGuide`** (for vertical-only scrolling).
+- **Scrolling is implemented by changing `bounds.origin`**: `contentOffset` *is* the bounds origin. Subviews keep their frames, and the visible "window" moves over them (that's why bounds can have a non-zero origin).
+- **`contentInset` / `adjustedContentInset`** – extra scrollable padding (safe areas, keyboard). `contentInsetAdjustmentBehavior` handles safe areas automatically.
+- **Gestures:** UIScrollView owns a **pan gesture recognizer** (and a pinch for **zooming**, with `viewForZooming(in:)`, `minimumZoomScale`/`maximumZoomScale`). `delaysContentTouches` briefly delays touches to decide between scroll and tap. Deceleration and bouncing are animated by the scroll view itself.
+- **Delegate:** `scrollViewDidScroll`, `scrollViewWillEndDragging(_:withVelocity:targetContentOffset:)` (custom snapping/paging), `scrollViewDidEndDecelerating`. `isPagingEnabled` gives page snapping.
+- Table and collection views are UIScrollView subclasses. **RunLoop** switches to `.tracking` mode while scrolling, so `.default`-mode timers pause.
+
+</details>
+
+### 33. What events can UIControls (buttons, switches) respond to?
+
+<details>
+<summary>Answer</summary>
+
+`UIControl.Event`:
+- **Touch events:** `.touchDown`, `.touchDownRepeat`, `.touchDragInside/Outside/Enter/Exit`, **`.touchUpInside`** (the standard "tap": the finger lifts inside the control), `.touchUpOutside`, `.touchCancel`.
+- **Value events:** **`.valueChanged`** (switches, sliders, segmented controls, date pickers, refresh control).
+- **Editing events** (UITextField): `.editingDidBegin`, `.editingChanged`, `.editingDidEnd`, `.editingDidEndOnExit`.
+- **`.primaryActionTriggered`** – the control's main action (the button tap, or return in a text field). Used by `UIAction` closures (iOS 14+).
+
+Controls also have **states** (`.normal`, `.highlighted`, `.selected`, `.disabled`) for styling. Modern buttons use `UIButton.Configuration`.
+
+</details>
+
+### 34. What are UIActivityViewController, UIVisualEffectView and UIEditMenuInteraction for?
+
+<details>
+<summary>Answer</summary>
+
+- **`UIActivityViewController`** – the system **share sheet** (share text, URLs or images to other apps, AirDrop, copy, save). You can add custom `UIActivity` items and exclude activity types. On iPad it **must be presented as a popover** (set `popoverPresentationController.sourceView`), or the app crashes. SwiftUI: `ShareLink`.
+- **`UIVisualEffectView`** – applies **blur** (`UIBlurEffect`) and **vibrancy** effects to content behind it (the frosted-glass look). In iOS 26, **`UIGlassEffect`** provides the Liquid Glass material.
+- **`UIEditMenuInteraction`** (iOS 16) – the replacement for the deprecated **`UIMenuController`**. It shows the copy/paste/custom-action edit menu. `UIContextMenuInteraction` gives long-press context menus with previews.
+
+</details>
+
+### 35. Safe area vs layout margins?
+
+<details>
+<summary>Answer</summary>
+
+- **Safe area** (`safeAreaLayoutGuide`, `safeAreaInsets`) – the region **not covered** by system UI: the notch/Dynamic Island, status bar, home indicator, navigation and tab bars. Constrain content to it so nothing is hidden. Backgrounds usually extend **beyond** it (edge to edge).
+- **Layout margins** (`layoutMarginsGuide`, `directionalLayoutMargins`) – **inner padding** for content inside a view (default ~16–20 pt), adapting to size class and readable width. `readableContentGuide` limits line length for text on wide screens.
+- `additionalSafeAreaInsets` on a view controller adds custom inset areas (e.g. for a custom floating bar).
+
+</details>
+
+### 36. What are CGAffineTransform and CADisplayLink used for?
+
+<details>
+<summary>Answer</summary>
+
+- **`CGAffineTransform`** – a 2D transformation matrix for **scale, rotate and translate** (and combinations of them) applied to a view: `view.transform = CGAffineTransform(scaleX: 1.2, y: 1.2).rotated(by: .pi / 8)`. It's used in animations (a pop effect, a shake) and doesn't affect Auto Layout (the frame becomes undefined; use bounds/center). Reset it with `.identity`. Use `CATransform3D` for 3D layer transforms.
+- **`CADisplayLink`** – a timer **synchronized with the display refresh** (60/120 Hz). It calls your selector before each frame, for custom frame-by-frame animations, games or progress drawing. Set `preferredFrameRateRange` (ProMotion), pause it when not needed, and **invalidate** it (it retains its target, so it's a leak risk).
+
+</details>
+
+### 37. How do you work with styled text (NSAttributedString / AttributedString)?
+
+<details>
+<summary>Answer</summary>
+
+- **`NSAttributedString` / `NSMutableAttributedString`** (Foundation, reference type) – a string with **attributes over ranges**: font, color, links, paragraph style, underline, attachments (images). It's used by `UILabel.attributedText` and `UITextView`. Ranges are `NSRange` (UTF-16).
+- **`AttributedString`** (iOS 15+, a Swift value type) – type-safe attributes, Swift ranges, **Markdown initialization** (`try AttributedString(markdown: "**Bold** _text_")`), and it works directly with SwiftUI `Text`. iOS 26 adds rich-text editing with `TextEditor`.
+- Convert between them with `NSAttributedString(attrString)` / `AttributedString(nsAttrString)`.
+
+</details>
+
+### 38. `viewDidLoad` vs `viewDidAppear` – where should you load remote data?
+
+<details>
+<summary>Answer</summary>
+
+- **`viewDidLoad`** runs **once**. Start the **initial data load** here (async), so it doesn't repeat every time the screen appears. Show a loading state immediately.
+- **`viewWillAppear`/`viewDidAppear`** run **every time** the screen appears. Use them to **refresh** data that may have changed (after returning from an edit screen), or to start things that only matter while visible (analytics, animations, location).
+- Never block either one with synchronous network calls. Usually the view model owns the load, triggered once, with a "refresh if stale" policy on appear.
+
+</details>
+
+### 39. What happens when UIColor/Color values are outside 0–1?
+
+<details>
+<summary>Answer</summary>
+
+Since iOS 10, UIColor supports **extended-range sRGB**. Components **below 0 or above 1 are allowed and not clamped**. They represent colors **outside the sRGB gamut**, which wide-color **Display P3** screens can show (more vivid reds and greens). On non-wide-color displays they're clamped when rendered. Prefer `UIColor(displayP3Red:green:blue:alpha:)` and asset catalogs with Display P3 variants. A common bug is passing 0–255 values directly (`UIColor(red: 255, …)`) instead of dividing by 255, which gives out-of-range components.
+
+</details>
+
 ---
 
 [⬅ Previous: iOS Fundamentals](08-ios-fundamentals.md) · [⬅ Back to index](../README.md) · [Next: SwiftUI ➡](10-swiftui.md)

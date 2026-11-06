@@ -248,6 +248,38 @@ For new code, prefer **Swift Concurrency** (async/await, actors, structured task
 
 </details>
 
+
+### 18. Semaphore vs mutex vs lock?
+
+<details>
+<summary>Answer</summary>
+
+- **Mutex / lock** (`NSLock`, `os_unfair_lock`, `Mutex`) – **mutual exclusion**: only **one** thread holds it, and **the same thread that locked it must unlock it** (ownership). It protects a critical section.
+- **Semaphore** (`DispatchSemaphore(value: n)`) – a **counter** that allows up to **n** concurrent holders. **There's no ownership**: any thread can `signal()`. A semaphore with value 1 behaves like a lock, but without ownership it can't do priority inversion avoidance and it's easier to misuse.
+- **Recursive lock** – the same thread can acquire it multiple times.
+- **Condition** (`NSCondition`) – lock + wait/signal on a condition.
+
+Use a lock for protecting state, a semaphore for **limiting concurrency** or signaling, and an actor in Swift concurrency code.
+
+</details>
+
+### 19. What are the different ways to achieve concurrency on iOS?
+
+<details>
+<summary>Answer</summary>
+
+From lowest to highest level:
+1. **POSIX threads (pthreads)** – C API, full manual control. Rarely used directly.
+2. **`Thread` (NSThread)** – an object wrapper over a thread. You manage its lifecycle and synchronization.
+3. **GCD** – submit closures to queues, and the system manages a thread pool.
+4. **`OperationQueue` / `Operation`** – an object-oriented API on top of GCD, with dependencies, cancellation and max concurrency.
+5. **Swift Concurrency** – async/await, `Task`, TaskGroup, actors. Structured and compiler-checked. **The recommended approach today.**
+6. **Combine / RunLoop-based** async (timers, delegates) for event streams.
+
+Also: `DispatchQueue.concurrentPerform` for parallel loops, and `@synchronized`-style locks for protecting state.
+
+</details>
+
 ---
 
 [⬅ Previous: Memory Management](03-memory-management.md) · [⬅ Back to index](../README.md) · [Next: Swift Concurrency ➡](05-swift-concurrency.md)

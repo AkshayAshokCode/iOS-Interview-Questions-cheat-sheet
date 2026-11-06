@@ -393,6 +393,219 @@ Extensions add functionality to existing types (even ones you don't own): comput
 
 </details>
 
+
+---
+
+## More Swift Essentials
+
+### 31. `==` vs `===` in Swift?
+
+<details>
+<summary>Answer</summary>
+
+- `==` – **value equality**, from `Equatable` (it compares content).
+- `===` – **identity**: do two **class references** point to the **same instance**? It's only available for class instances (`AnyObject`).
+
+```swift
+let a = Person(name: "A"); let b = Person(name: "A"); let c = a
+a == b    // true if Person is Equatable by name
+a === b   // false – different instances
+a === c   // true
+```
+
+</details>
+
+### 32. Float vs Double vs CGFloat?
+
+<details>
+<summary>Answer</summary>
+
+- **`Float`** – 32-bit floating point, about 6–7 significant digits.
+- **`Double`** – 64-bit, about 15–16 digits. **Swift's default** for floating-point literals. Prefer it.
+- **`CGFloat`** – the Core Graphics type used for UI geometry (frames, points). It's 64-bit on all modern devices. Since Swift 5.5, `CGFloat` and `Double` convert **implicitly** in most places.
+
+Never use floating point for **money**. Use `Decimal` (or integer minor units such as cents).
+
+</details>
+
+### 33. How do Strings work in Swift? Why can't you index them with an `Int`?
+
+<details>
+<summary>Answer</summary>
+
+- A Swift `String` is a **Unicode-correct collection of `Character`s**, where each Character is an **extended grapheme cluster**. "é" can be one or two Unicode scalars, and "👨‍👩‍👧" is a single Character made of several scalars.
+- Characters have **variable width**, so finding the n-th character requires walking from the start (**O(n)**). Swift therefore uses `String.Index` instead of integer subscripts: `s[s.index(s.startIndex, offsetBy: 3)]`.
+- `count` is also **O(n)** for the same reason. Use `isEmpty`, not `count == 0`.
+- Slicing gives a **`Substring`**, which **shares storage** with the original. Convert it with `String(sub)` before storing it long-term, to avoid keeping the large original alive.
+- Views: `.unicodeScalars`, `.utf8`, `.utf16`.
+- **Raw strings** `#"C:\path"#` don't need escaping (interpolation uses `\#(value)`). **Multi-line strings** use `"""`.
+- Strings are **value types** with copy-on-write. "Strings are collections" means you can use `map`, `filter`, `reversed()` and so on.
+
+</details>
+
+### 34. What are ranges? Closed, half-open and one-sided ranges?
+
+<details>
+<summary>Answer</summary>
+
+```swift
+1...5      // ClosedRange: 1,2,3,4,5
+0..<5      // Range (half-open): 0,1,2,3,4 – common for indices
+array[2...]   // one-sided: from index 2 to the end
+array[..<3]   // up to (not including) 3
+array[...3]   // up to and including 3
+switch age { case ..<13: "child"; case 13...19: "teen"; default: "adult" }
+for i in stride(from: 0, to: 10, by: 2) { }   // custom step
+```
+
+One-sided ranges are handy for slicing and for pattern matching in `switch`.
+
+</details>
+
+### 35. What is the `Result` type and when would you use it?
+
+<details>
+<summary>Answer</summary>
+
+`Result<Success, Failure: Error>` is an enum with `.success(value)` / `.failure(error)`. It represents the outcome of an operation **as a value**.
+
+Use cases:
+- **Completion handlers** (the pre-async/await standard): `completion: (Result<User, NetworkError>) -> Void` instead of `(User?, Error?)` (which has ambiguous combinations).
+- **Storing an outcome** for later, or passing it through layers.
+- Combining with `map`, `flatMap`, `mapError`, and `get()` (which converts back to `throws`).
+- With async/await, prefer `throws`. Convert with `Result { try work() }` or `try result.get()`.
+
+</details>
+
+### 36. `try` vs `try?` vs `try!`? What are multi-pattern catch clauses?
+
+<details>
+<summary>Answer</summary>
+
+- **`try`** – propagate the error. It must be inside `do/catch` or a `throws` function.
+- **`try?`** – convert the result into an **optional**, returning `nil` on error (the error itself is discarded).
+- **`try!`** – **crash** if an error is thrown. Only use it when failure is impossible (e.g. a bundled resource).
+
+```swift
+do {
+    try checkout()
+} catch PaymentError.declined, PaymentError.expired {        // multi-pattern catch (Swift 5.3)
+    showRetry()
+} catch let error as NetworkError where error.isTransient {
+    retryLater()
+} catch {
+    show(error)        // implicit `error` constant
+}
+```
+
+</details>
+
+### 37. When do Swift functions not need a `return` keyword?
+
+<details>
+<summary>Answer</summary>
+
+**Implicit returns:** a function, closure, computed property or subscript whose body is a **single expression** returns that expression automatically. Since **Swift 5.9**, `if` and `switch` can also be used **as expressions**:
+
+```swift
+func square(_ x: Int) -> Int { x * x }
+var isAdult: Bool { age >= 18 }
+let label = switch status { case .ok: "Fine"; case .error: "Oops" }
+```
+
+</details>
+
+### 38. What do `#if`, `canImport`, `targetEnvironment`, `#warning`/`#error` do? `assert` vs `precondition` vs `fatalError`?
+
+<details>
+<summary>Answer</summary>
+
+**Compile-time conditions:**
+- `#if DEBUG` / custom flags (`SWIFT_ACTIVE_COMPILATION_CONDITIONS`).
+- `#if os(iOS)`, `#if swift(>=6.0)`, `#if compiler(>=6.0)`.
+- `#if canImport(UIKit)` – compile code only if a module is available (multiplatform packages).
+- `#if targetEnvironment(simulator)` – simulator-only code (e.g. mock camera or push).
+- `#warning("TODO")` / `#error("Missing API key")` – emit a compiler warning or error.
+- `if #available(iOS 17, *)` – a **runtime** OS version check.
+
+**Assertions:**
+- `assert(cond)` – checked only in **debug** builds (`-Onone`). Use it for developer sanity checks.
+- `precondition(cond)` – checked in **debug and release** (`-O`). Use it for invariants that must hold (invalid arguments).
+- `fatalError("msg")` – **always** crashes, regardless of build. Use it for unreachable code or unimplemented `init(coder:)`.
+- `assertionFailure` / `preconditionFailure` – the unconditional versions.
+
+</details>
+
+### 39. What does the `@main` attribute do?
+
+<details>
+<summary>Answer</summary>
+
+`@main` marks the **entry point** of the program: a type with a `static func main()`, provided by protocols such as SwiftUI's `App` or `UIApplicationDelegate`. It replaced `main.swift` / `@UIApplicationMain` / `@NSApplicationMain`. Only one per module.
+
+</details>
+
+### 40. Why is immutability important? What is a UUID used for?
+
+<details>
+<summary>Answer</summary>
+
+**Immutability** (`let`, value types, `private(set)`):
+- **Thread safety**: immutable data can be shared across threads and tasks without locks (it's `Sendable`).
+- **Predictability**: no hidden changes from other references, so it's easier to reason about and debug.
+- **Compiler optimizations**, and SwiftUI/diffing benefit from value snapshots.
+
+**UUID** (`UUID()`) – a 128-bit universally unique identifier, used for client-generated IDs (offline-created records, **idempotency keys** for payment requests), `Identifiable` conformance, and file names. Use `uuidString` for storage.
+
+</details>
+
+### 41. Functions vs methods? What does `private(set)` do?
+
+<details>
+<summary>Answer</summary>
+
+- A **function** is a standalone, named block of code. A **method** is a function **associated with a type** (instance methods, or static/class methods).
+- **`private(set)`** gives a property a **public (or internal) getter** but a **private setter**, so outside code can read it but only the type itself can change it:
+
+```swift
+final class Counter {
+    private(set) var count = 0
+    func increment() { count += 1 }
+}
+```
+
+`public private(set) var` is common in library APIs and view models.
+
+</details>
+
+### 42. How do you compare two tuples?
+
+<details>
+<summary>Answer</summary>
+
+Tuples of `Equatable` elements can be compared with `==` directly, and tuples of `Comparable` elements with `<` (lexicographically, element by element), **for tuples of up to 6 elements**:
+
+```swift
+(1, "a") == (1, "a")   // true
+(1, "z") < (2, "a")    // true – first elements decide
+```
+
+Tuples can't conform to protocols (so they can't be dictionary keys). Use a struct for anything bigger or reused.
+
+</details>
+
+### 43. Shallow vs deep copy in Swift? What is `NSCopying`?
+
+<details>
+<summary>Answer</summary>
+
+- **Value types** (structs, enums, arrays of value types) are **copied on assignment**, so you get a deep copy of value data (with CoW making it cheap).
+- **Class instances** are **shared**: copying a reference is a *shallow* copy. A struct holding a class reference copies only the reference, so both copies share the object.
+- For an independent copy of a class, implement a copy initializer or method, or conform to **`NSCopying`** (`copy(with:)`), which the ObjC `copy` property attribute relies on.
+- **Deep copy** of nested classes means copying each referenced object recursively. Prefer value types to avoid the problem altogether.
+
+</details>
+
 ---
 
 [⬅ Back to index](../README.md) · [Next: Swift Advanced ➡](02-swift-advanced.md)

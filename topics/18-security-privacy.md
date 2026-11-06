@@ -134,7 +134,7 @@ Load only trusted HTTPS content, validate navigation in `decidePolicyFor navigat
 <details>
 <summary>Answer</summary>
 
-Passkeys are **passwordless, phishing-resistant credentials** based on WebAuthn/FIDO2 public-key cryptography. The private key is stored in **iCloud Keychain** (synced end-to-end encrypted across the user's devices), and the server stores only the public key. Implement them with **AuthenticationServices** (`ASAuthorizationPlatformPublicKeyCredentialProvider`) + **Associated Domains** (`webcredentials:`). iOS 26 adds an account creation API that makes it easier to create passkeys at sign-up. Also mention **Sign in with Apple** (required if you offer other third-party social logins, with some exceptions).
+Passkeys are **passwordless, phishing-resistant credentials** based on WebAuthn/FIDO2 public-key cryptography. The private key is stored in **iCloud Keychain** (synced end-to-end encrypted across the user's devices), and the server stores only the public key. Implement them with **AuthenticationServices** (`ASAuthorizationPlatformPublicKeyCredentialProvider`) + **Associated Domains** (`webcredentials:`). iOS 26 adds an account creation API that makes it easier to create passkeys at sign-up. Also mention **Sign in with Apple**: under Guideline 4.8, apps that use third-party or social login must also offer an *equivalent privacy-focused login option*. Since 2024 that no longer has to be Sign in with Apple specifically, but it's the usual choice.
 
 </details>
 
@@ -203,6 +203,48 @@ Data minimization (collect only what's needed), on-device processing where possi
 <summary>Answer</summary>
 
 When the scene resigns active (`sceneWillResignActive`, or `scenePhase == .inactive`), overlay a blur or placeholder view, and remove it when the scene becomes active again. The system takes the snapshot for the app switcher when the app goes to the background.
+
+</details>
+
+
+---
+
+## Cryptography Basics
+
+### 18. Hashing vs encryption vs encoding? How do you compute a secure hash in Swift?
+
+<details>
+<summary>Answer</summary>
+
+| | Purpose | Reversible? | Key? | Examples |
+|---|---|---|---|---|
+| **Encoding** | Change the representation (transport/storage) | Yes, by anyone | No | Base64, URL encoding, UTF-8 |
+| **Encryption** | **Confidentiality** | Yes, with the key | Yes | AES-GCM, ChaChaPoly, RSA/ECC |
+| **Hashing** | **Integrity/fingerprint**, one-way | No | No (HMAC uses one) | SHA-256, SHA-512 |
+
+```swift
+import CryptoKit
+let digest = SHA256.hash(data: Data("hello".utf8))
+let hex = digest.map { String(format: "%02x", $0) }.joined()
+
+let key = SymmetricKey(size: .bits256)
+let mac = HMAC<SHA256>.authenticationCode(for: data, using: key)   // keyed integrity
+```
+
+Base64 is **not** security. MD5/SHA-1 are broken for security purposes (`Insecure.MD5` exists in CryptoKit only for legacy compatibility). Passwords should be hashed **on the server** with slow, salted algorithms (bcrypt/Argon2), never stored on the device.
+
+</details>
+
+### 19. Symmetric vs asymmetric encryption? How does CryptoKit help?
+
+<details>
+<summary>Answer</summary>
+
+- **Symmetric** (AES-GCM, ChaChaPoly) – the **same key** encrypts and decrypts. **Fast**, so it's used for bulk data (encrypting files or a local DB). The challenge is protecting and sharing the key (keep it in the Keychain or Secure Enclave).
+- **Asymmetric** (P-256/Curve25519, RSA) – a **public key** encrypts or verifies, and a **private key** decrypts or signs. Slower, but it solves **key exchange** and enables **signatures** (code signing, passkeys, App Attest).
+- **Hybrid in practice:** TLS and end-to-end messaging use asymmetric key agreement (ECDH) to derive a **symmetric session key**, then AES for the data.
+
+**CryptoKit** (iOS 13+) gives a safe, Swift-native API: `AES.GCM.seal/open`, `ChaChaPoly`, `Curve25519.KeyAgreement`, `P256.Signing`, `HKDF`, `SecureEnclave.P256` (non-exportable hardware keys), and **post-quantum** algorithms (ML-KEM, ML-DSA) added in iOS 26. Never implement your own crypto.
 
 </details>
 

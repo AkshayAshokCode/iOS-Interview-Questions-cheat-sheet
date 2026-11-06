@@ -176,7 +176,7 @@ KMP lets teams **share business logic** (networking, persistence, domain) writte
 - **EU Digital Markets Act**: alternative app marketplaces and web distribution in the EU, plus alternative payment terms. US court rulings (2025) allow **external purchase links** in US storefronts. These rules keep changing, so check the current guidelines.
 - **Accessibility Nutrition Labels** on App Store product pages (announced 2025).
 - **Declared Age Range API** to help apps comply with child-safety laws.
-- **Minimum SDK requirements**: uploads must be built with a recent Xcode/SDK (Apple raises this every spring, e.g. the iOS 18 SDK from April 2025, and the iOS 26 SDK expected in 2026).
+- **Minimum SDK requirements**: uploads must be built with a recent Xcode/SDK (Apple raises this every spring: the iOS 18 SDK / Xcode 16 from April 2025, and the iOS 26 SDK / Xcode 26 from April 2026).
 
 </details>
 
@@ -195,6 +195,39 @@ Passkeys are phishing-resistant, passwordless sign-in credentials synced through
 <summary>Answer</summary>
 
 **WWDC sessions** (watch the "What's new in Swift/SwiftUI/UIKit" sessions every year), Apple Developer News and release notes, the Swift Evolution proposals and the Swift Forums, the Swift.org blog, newsletters (iOS Dev Weekly, SwiftLee, Hacking with Swift), Point-Free, Swift by Sundell, podcasts, and building small side projects with new APIs. In the interview, mention a **specific recent API you tried** and what you learned.
+
+</details>
+
+
+### 16. How has Swift changed since 2014?
+
+<details>
+<summary>Answer</summary>
+
+- **Swift 1–2 (2014–15):** introduction; `guard`, `defer`, error handling (`throws`), protocol extensions (POP). Open-sourced in December 2015.
+- **Swift 3 (2016):** the "Grand Renaming" API guidelines, a big source-breaking cleanup.
+- **Swift 4 (2017):** **Codable**, smart key paths, multi-line strings.
+- **Swift 5 (2019):** **ABI stability** (the runtime ships with the OS), `Result`, raw strings. 5.1: module stability, **opaque types (`some`)**, property wrappers, function builders → **SwiftUI**. 5.5: **async/await, actors, structured concurrency**. 5.7: `if let x` shorthand, `any`, primary associated types, regex literals. 5.9: **macros**, `if`/`switch` expressions, parameter packs, ownership (`consuming`/`borrowing`), noncopyable types.
+- **Swift 6 (2024):** **compile-time data-race safety**, typed throws, Embedded Swift, the Swift Testing framework, a unified Foundation. **6.2 (2025):** approachable concurrency, `InlineArray`, `Span`, WebAssembly support.
+
+The trend: **safety** (memory, then concurrency), **performance** (ownership, noncopyable types), **expressiveness** (macros, result builders), and growth beyond Apple platforms (Linux, Windows, Android, embedded, server).
+
+</details>
+
+### 17. Native vs Flutter vs React Native vs Kotlin Multiplatform – what would you choose?
+
+<details>
+<summary>Answer</summary>
+
+| | Native (Swift) | Flutter | React Native | KMP (+ Compose Multiplatform) |
+|---|---|---|---|---|
+| Language | Swift | Dart | JS/TS | Kotlin |
+| UI | UIKit/SwiftUI (true native, Liquid Glass "for free") | Own renderer (Impeller); not native widgets | Native components through the new architecture | Native SwiftUI, **or** shared Compose UI |
+| Sharing | None | UI + logic | UI + logic | Logic first, optional UI |
+| New iOS APIs | Day one | Through plugins | Through native modules | Swift interop / expect-actual |
+| Adoption | — | Usually a rewrite | Full app or brownfield | **Incremental** |
+
+A good answer: "Native gives the best UX, performance and immediate access to new platform features (widgets, Live Activities, App Intents, Liquid Glass). Cross-platform reduces cost when the UI is mostly shared and the team has the skills. KMP is a pragmatic middle ground for sharing business logic while keeping SwiftUI."
 
 </details>
 

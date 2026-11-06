@@ -259,6 +259,31 @@ Remove timing dependencies (no `sleep`; use expectations and injected clocks), i
 
 </details>
 
+
+### 16. What makes a good unit test? (AAA, FIRST)
+
+<details>
+<summary>Answer</summary>
+
+- **Arrange–Act–Assert (AAA):** set up the SUT and its inputs → perform **one** action → assert the outcome.
+
+```swift
+@Test func applyingCouponReducesTotal() {
+    // Arrange
+    let cart = Cart(items: [.init(price: 100)])
+    // Act
+    cart.apply(Coupon(percent: 10))
+    // Assert
+    #expect(cart.total == 90)
+}
+```
+
+- **FIRST:** **F**ast, **I**ndependent (no shared state or order dependence), **R**epeatable (no real network, time or randomness), **S**elf-validating (pass or fail without manual checks), **T**imely (written alongside the code).
+- Test **behaviour, not implementation details**. Give tests descriptive names, keep logic out of tests, and cover edge cases and error paths.
+- **Benefits of tests:** catching regressions, safer refactoring, documentation of behaviour, and better design (testable code is decoupled code).
+
+</details>
+
 ---
 
 [⬅ Previous: Performance](16-performance.md) · [⬅ Back to index](../README.md) · [Next: Security & Privacy ➡](18-security-privacy.md)

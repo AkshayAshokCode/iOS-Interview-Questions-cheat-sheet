@@ -214,6 +214,18 @@ Boilerplate (protocols with a single implementation, pass-through use cases, VIP
 
 </details>
 
+
+### 16. Software architecture vs software design? Class vs object?
+
+<details>
+<summary>Answer</summary>
+
+- **Software architecture** – the **high-level structure** of the whole system: layers, modules, how data flows, technology choices (MVVM + Coordinators, Clean layers, modularization, offline-first). These decisions are expensive to change.
+- **Software design** – the **lower-level** structure inside components: classes, protocols, design patterns, APIs and algorithms.
+- **Class vs object:** a **class** (or struct type) is the **blueprint** that defines properties and behaviour. An **object/instance** is a concrete **realization** of that blueprint in memory, with its own state.
+
+</details>
+
 ---
 
 [⬅ Previous: SwiftUI](10-swiftui.md) · [⬅ Back to index](../README.md) · [Next: Dependency Injection & SPM ➡](12-dependency-injection-modularization.md)

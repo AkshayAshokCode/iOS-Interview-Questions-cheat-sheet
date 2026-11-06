@@ -398,6 +398,130 @@ Stories to prepare: a hard crash or memory leak, a performance win, adopting Swi
 
 </details>
 
+
 ---
 
-[⬅ Previous: What's New & Trending](21-whats-new-trending.md) · [⬅ Back to index](../README.md)
+## More Coding & Process Questions
+
+### 20. Merge two sorted arrays into one sorted array.
+
+<details>
+<summary>Answer</summary>
+
+```swift
+func merge<T: Comparable>(_ a: [T], _ b: [T]) -> [T] {
+    var result: [T] = []
+    result.reserveCapacity(a.count + b.count)
+    var i = 0, j = 0
+    while i < a.count && j < b.count {
+        if a[i] <= b[j] { result.append(a[i]); i += 1 }
+        else { result.append(b[j]); j += 1 }
+    }
+    result.append(contentsOf: a[i...])
+    result.append(contentsOf: b[j...])
+    return result
+}
+merge([1, 4, 7], [2, 3, 8])   // [1, 2, 3, 4, 7, 8]
+```
+
+**O(n + m)** time, O(n + m) space. Using `<=` keeps it stable. (`(a + b).sorted()` is O((n+m) log(n+m)), so mention why the two-pointer approach is better.)
+
+</details>
+
+### 21. Implement your own `map`, `filter` and `reduce`.
+
+<details>
+<summary>Answer</summary>
+
+```swift
+extension Sequence {
+    func myMap<T>(_ transform: (Element) throws -> T) rethrows -> [T] {
+        var result: [T] = []
+        result.reserveCapacity(underestimatedCount)
+        for element in self { result.append(try transform(element)) }
+        return result
+    }
+    func myFilter(_ isIncluded: (Element) throws -> Bool) rethrows -> [Element] {
+        var result: [Element] = []
+        for element in self where try isIncluded(element) { result.append(element) }
+        return result
+    }
+    func myReduce<Result>(_ initial: Result,
+                          _ next: (Result, Element) throws -> Result) rethrows -> Result {
+        var acc = initial
+        for element in self { acc = try next(acc, element) }
+        return acc
+    }
+}
+[1, 2, 3].myReduce(0, +)   // 6
+```
+
+Points to mention: generics, `rethrows` (only throws if the closure throws), extending `Sequence` (not just Array), and `reserveCapacity` for performance.
+
+</details>
+
+### 22. Why doesn't this code compile? (Common compile-error questions)
+
+<details>
+<summary>Answer</summary>
+
+```swift
+struct Point { var x = 0 }
+let p = Point()
+p.x = 5                       // ❌ `p` is a let constant – struct is fully immutable
+```
+
+```swift
+struct Counter { var count = 0
+    func increment() { count += 1 }   // ❌ needs `mutating`
+}
+```
+
+```swift
+class Base { final func save() {} }
+class Child: Base { override func save() {} }   // ❌ cannot override final method
+```
+
+```swift
+let value: Int? = 5
+let doubled = value * 2       // ❌ must unwrap optional first
+```
+
+```swift
+func load(completion: () -> Void) {
+    DispatchQueue.main.async { completion() }   // ❌ non-escaping closure captured by escaping one → mark @escaping
+}
+```
+
+```swift
+var items = [1, 2, 3]
+Task.detached { items.append(4) }   // ❌ Swift 6: mutation of captured var in concurrently-executing code
+```
+
+</details>
+
+### 23. How do you do code reviews?
+
+<details>
+<summary>Answer</summary>
+
+**As a reviewer:** understand the intent first. Check **correctness** (edge cases, optionals, error paths, threading/actor isolation, retain cycles), **architecture fit** (layering, no business logic in views), **readability**, and **tests**. Look for iOS-specific issues: main-thread blocking, `[weak self]` where it's needed, force unwraps, UI updates off the main actor, accessibility labels, localization (no hardcoded strings), privacy (logging PII), and memory (large images). Be kind and specific, separate blocking issues from nits, explain the *why*, and automate style with SwiftLint/SwiftFormat.
+
+**As an author:** small PRs, a clear description with screenshots or videos, self-review first, and tests included.
+
+</details>
+
+### 24. Agile vs Waterfall? Have you filed bugs with Apple?
+
+<details>
+<summary>Answer</summary>
+
+- **Waterfall:** sequential phases with fixed scope. Changes are expensive, and feedback comes late.
+- **Agile:** iterative increments with continuous feedback. **Scrum** (sprints, ceremonies, roles) or **Kanban** (continuous flow, WIP limits). For mobile teams, mention **release trains** (e.g. a weekly App Store release), feature flags for unfinished work, and phased releases.
+- **Filing bugs with Apple:** use **Feedback Assistant** (feedbackassistant.apple.com) with a minimal reproducible sample project, the OS and Xcode versions, steps, expected vs actual behaviour, and a sysdiagnose if relevant. Then work around the bug in code and link the FB number in a code comment. Interviewers like candidates who do this, because it shows ownership.
+
+</details>
+
+---
+
+[⬅ Previous: What's New & Trending](21-whats-new-trending.md) · [⬅ Back to index](../README.md) · [Next: Objective-C Essentials ➡](23-objective-c.md)

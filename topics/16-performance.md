@@ -169,6 +169,19 @@ Use the Xcode memory gauge and memory graph, **Allocations** with generations (r
 
 </details>
 
+
+### 14. Why are caching and compression important on mobile devices?
+
+<details>
+<summary>Answer</summary>
+
+Mobile devices have **slow, unreliable and often metered networks**, **limited battery** (the radio is one of the biggest power consumers, and every request keeps it awake for seconds), and limited memory and storage.
+- **Caching** avoids repeated downloads: instant UI, offline support, fewer radio wake-ups, less server load. Use layers (memory → disk → HTTP cache) with sensible invalidation.
+- **Compression** (gzip/brotli for responses, which URLSession decodes automatically; efficient image formats like HEIC/WebP; downsampled image sizes) means fewer bytes, so it's faster and cheaper in data and battery.
+- Respect **Low Data Mode** (`allowsConstrainedNetworkAccess = false` for non-essential transfers) and expensive networks.
+
+</details>
+
 ---
 
 [⬅ Previous: Background & Notifications](15-background-notifications.md) · [⬅ Back to index](../README.md) · [Next: Testing ➡](17-testing.md)

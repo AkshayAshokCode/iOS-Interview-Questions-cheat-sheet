@@ -241,6 +241,61 @@ Prefer **cursor-based** pagination (`?after=<cursor>`) over offset-based (`?page
 
 </details>
 
+
+---
+
+## More Networking Questions
+
+### 18. TCP vs UDP? What are sockets? REST vs SOAP?
+
+<details>
+<summary>Answer</summary>
+
+- **TCP** – connection-oriented, **reliable and ordered** (handshake, retransmission). Used by HTTP/1.1, HTTP/2, WebSockets.
+- **UDP** – connectionless, **no delivery or order guarantees**, low latency. Used for real-time audio/video (WebRTC), DNS, games, and **QUIC/HTTP/3** (URLSession supports HTTP/3).
+- **Sockets** – endpoints (IP + port) for network communication. On iOS: the **Network framework** (`NWConnection`, `NWListener`) is the modern API; `URLSessionStreamTask`, and the legacy `CFStream`/`NSStream`, also exist.
+- **REST** – resource-oriented, HTTP verbs, usually JSON, stateless and lightweight. **SOAP** – an XML-based protocol with a strict contract (WSDL) and envelope. It's verbose and mostly found in legacy enterprise systems.
+
+</details>
+
+### 19. What are the pros and cons of JSON? What alternatives exist?
+
+<details>
+<summary>Answer</summary>
+
+**JSON pros:** human-readable, universal support (Codable), schema-less flexibility, easy debugging.
+**Cons:** verbose (larger payloads), slower to parse than binary formats, no built-in schema or type guarantees (runtime decoding errors), and no native date or binary types (dates need conventions, binary data needs Base64).
+
+**Alternatives:** **Protocol Buffers** (binary, schema, smaller and faster, backward compatible; `swift-protobuf`, used with gRPC), FlatBuffers (zero-copy), MessagePack, and Property Lists (Apple-native). Use JSON by default, and binary formats when size and performance matter.
+
+</details>
+
+### 20. How do you upload files (multipart) with URLSession?
+
+<details>
+<summary>Answer</summary>
+
+Multipart/form-data sends files and fields in one request, separated by a **boundary**:
+
+```swift
+let boundary = "Boundary-\(UUID().uuidString)"
+var request = URLRequest(url: uploadURL); request.httpMethod = "POST"
+request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+var body = Data()
+body.append("--\(boundary)\r\n".data(using: .utf8)!)
+body.append("Content-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\n".data(using: .utf8)!)
+body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+body.append(imageData)
+body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+let (data, response) = try await URLSession.shared.upload(for: request, from: body)
+```
+
+For **large files**, write the body to a temporary file and use `uploadTask(with:fromFile:)` (required for **background sessions**), which avoids holding everything in memory. Track progress with the delegate's `didSendBodyData` or `task.progress`. Consider presigned URLs (uploading directly to S3/GCS) or resumable uploads for big media.
+
+</details>
+
 ---
 
 [⬅ Previous: DI & SPM](12-dependency-injection-modularization.md) · [⬅ Back to index](../README.md) · [Next: Data Persistence ➡](14-data-persistence.md)
