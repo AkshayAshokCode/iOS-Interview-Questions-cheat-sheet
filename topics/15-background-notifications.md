@@ -34,6 +34,16 @@ The `BackgroundTasks` framework (iOS 13) lets the system run deferred work at a 
 - **`BGProcessingTask`** – longer, deferrable maintenance (DB cleanup, ML training). It can require external power or network, and usually runs while the device is charging and idle.
 - **`BGContinuedProcessingTask`** (iOS 26) – continues a **user-initiated** task (e.g. an export) after the app is backgrounded, with system progress UI.
 
+```mermaid
+flowchart TD
+    REG["Register handler at launch<br/>(identifier in Info.plist)"] --> SUB["submit(BGAppRefreshTaskRequest)"]
+    SUB --> SYS{"System decides when<br/>(usage, battery, network)"}
+    SYS --> RUN["Handler runs:<br/>do work, set expirationHandler"]
+    RUN --> DONE["setTaskCompleted(success:)"]
+    DONE --> NEXT["Schedule the next one"]
+    NEXT --> SUB
+```
+
 Steps:
 1. Add the task identifiers to Info.plist (`BGTaskSchedulerPermittedIdentifiers`).
 2. **Register the handlers at launch** (before launch finishes).
@@ -70,6 +80,20 @@ Once the app is **suspended**, timers stop firing and in-flight `dataTask`s may 
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant APNs
+    participant BE as Your server
+    App->>App: requestAuthorization
+    App->>APNs: registerForRemoteNotifications
+    APNs-->>App: device token
+    App->>BE: send device token
+    BE->>APNs: push payload (HTTP/2, .p8 key)
+    APNs->>App: deliver notification
+    App->>App: user taps → didReceive response → deep link
+```
 
 1. The app asks for permission: `UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])`.
 2. It registers with APNs: `UIApplication.shared.registerForRemoteNotifications()`.

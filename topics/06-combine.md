@@ -31,6 +31,17 @@ searchField.textPublisher
 <details>
 <summary>Answer</summary>
 
+```mermaid
+sequenceDiagram
+    participant S as Subscriber
+    participant P as Publisher
+    S->>P: subscribe(subscriber)
+    P-->>S: receive(subscription)
+    S->>P: request(.unlimited / .max(n))
+    P-->>S: receive(value) … repeated
+    P-->>S: receive(completion: .finished / .failure)
+```
+
 1. The subscriber calls `subscribe` on the publisher.
 2. The publisher sends a **Subscription** to the subscriber.
 3. The subscriber **requests** a demand (`.unlimited` or `.max(n)`). That request is the backpressure mechanism.

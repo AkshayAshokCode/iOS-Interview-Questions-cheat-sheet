@@ -13,6 +13,15 @@ Covers: how to approach the round, plus worked designs: image cache/loader, news
 
 A structured approach (~45 min):
 
+```mermaid
+flowchart TD
+    R["1. Clarify requirements<br/>functional + non-functional"] --> H["2. Client architecture<br/>UI → ViewModel → Repository"]
+    H --> A["3. API design<br/>endpoints, pagination, real-time"]
+    A --> D["4. Data layer<br/>SwiftData/Core Data, caching, sync"]
+    D --> DD["5. Deep dives (2–3)"]
+    DD --> W["6. Wrap-up<br/>testing, monitoring, privacy, a11y"]
+```
+
 1. **Clarify requirements (5 min)**
    - Functional: the core features; agree on scope.
    - Non-functional: offline support, real-time needs, scale (users, items), latency, battery and data usage, privacy and security, accessibility, the minimum iOS version, iPad support.
@@ -32,6 +41,22 @@ A structured approach (~45 min):
 <summary>Answer</summary>
 
 **Requirements:** load remote images into views; memory and disk caches; downsampling; placeholders; cancellation when cells are reused; deduplication; prefetching.
+
+```mermaid
+flowchart TD
+    REQ["load(url, targetSize)"] --> MC{"NSCache hit?"}
+    MC -->|"yes"| SHOW["Display on main actor"]
+    MC -->|"no"| DC{"Disk cache hit?"}
+    DC -->|"yes"| DEC["Downsample + decode (background)"]
+    DC -->|"no"| IF{"Already downloading?"}
+    IF -->|"yes"| AW["Await the same Task"]
+    IF -->|"no"| NET["URLSession download"]
+    NET --> WD["Write to disk cache"]
+    WD --> DEC
+    AW --> SHOW
+    DEC --> PUT["Store in NSCache"]
+    PUT --> SHOW
+```
 
 **Pipeline:**
 `load(url, targetSize)` → **memory cache** (`NSCache<NSURL, UIImage>`, keyed by URL + size; cost = decoded bytes) → hit? return it.
@@ -63,6 +88,23 @@ Miss → **network** (URLSession) → write the data to disk → **downsample** 
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+sequenceDiagram
+    participant UI
+    participant DB as Local DB
+    participant WS as WebSocket
+    participant S as Server
+    UI->>DB: insert message (.sending, clientId)
+    DB-->>UI: shows instantly
+    DB->>WS: send from outbox
+    WS->>S: message
+    S-->>WS: ack (serverSeq)
+    WS->>DB: status = .sent
+    S-->>WS: delivered / read receipts
+    WS->>DB: update status
+    Note over DB,S: app backgrounded → APNs + Notification Service Extension
+```
 
 - **Storage:** local DB as the source of truth: `Conversation`, `Message(id, clientId, conversationId, senderId, body, status, createdAt, serverSeq)`, indexed by `(conversationId, serverSeq)`.
 - **Real-time:** a **WebSocket** while in the foreground (heartbeats, reconnection with exponential backoff + jitter, resyncing from the last sequence number after reconnecting). In the background, **APNs** pushes, with a **Notification Service Extension** to decrypt or enrich the notification and possibly write to the shared App Group DB.

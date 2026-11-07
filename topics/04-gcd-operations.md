@@ -55,6 +55,16 @@ Serial/concurrent is a property of the **queue**. Sync/async is a property of ho
 
 Calling **`sync` on the serial queue you're already running on**: the current task waits for the new one, which can't start until the current one finishes.
 
+```mermaid
+sequenceDiagram
+    participant M as Main thread (serial)
+    participant Q as Main queue
+    M->>Q: DispatchQueue.main.sync(work)
+    Note over M: waits for work to finish
+    Note over Q: work can't start until<br/>the current task (on M) finishes
+    Note over M,Q: both wait forever = deadlock
+```
+
 ```swift
 DispatchQueue.main.sync { }   // ❌ called from main thread → deadlock (crash)
 

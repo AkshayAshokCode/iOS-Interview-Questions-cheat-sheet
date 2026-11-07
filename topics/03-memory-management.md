@@ -53,6 +53,14 @@ Unlike garbage collection, ARC is **deterministic** (no GC pauses), but it **can
 
 A retain cycle is two or more objects holding **strong references to each other**. Their counts never reach zero, so they **leak**.
 
+```mermaid
+flowchart LR
+    P["Person"] -->|"strong: apartment"| A["Apartment"]
+    A -->|"strong: tenant ❌ cycle"| P
+    P2["Person"] -->|"strong"| A2["Apartment"]
+    A2 -.->|"weak var tenant ✅"| P2
+```
+
 ```swift
 class Person { var apartment: Apartment?; deinit { print("Person freed") } }
 class Apartment { var tenant: Person?; deinit { print("Apt freed") } }   // ❌ strong both ways
@@ -71,6 +79,14 @@ p.apartment = a; a.tenant = p   // cycle → neither deinit is called
 <summary>Answer</summary>
 
 Closures **capture `self` strongly**. If `self` also stores the closure (directly or indirectly), you get a cycle: self → closure → self.
+
+```mermaid
+flowchart LR
+    VM["ViewModel (self)"] -->|"stores"| CL["onUpdate closure"]
+    CL -->|"captures self strongly ❌"| VM
+    CL2["closure with [weak self] ✅"] -.->|"weak"| VM2["ViewModel"]
+    VM2 -->|"stores"| CL2
+```
 
 ```swift
 class ProfileViewModel {

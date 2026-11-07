@@ -65,6 +65,19 @@ The async `URLSession` methods (iOS 15) **support cancellation**: cancelling the
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    VM["ViewModel"] --> RP["Repository"]
+    RP --> AC["APIClient.send(endpoint)"]
+    AC --> AD["Request adapters<br/>auth headers, user agent"]
+    AD --> US["URLSession"]
+    US --> VA["Response validation<br/>status codes"]
+    VA -->|"transient error"| RT["Retrier (backoff)"]
+    RT --> AD
+    VA --> DE["Decoder → DTO"]
+    DE -->|"map to domain model"| RP
+```
+
 ```swift
 protocol Endpoint {
     var path: String { get }
@@ -122,6 +135,21 @@ Map `URLError` codes (`.notConnectedToInternet`, `.timedOut`, `.cancelled`), HTT
 
 <details>
 <summary>Answer</summary>
+
+```mermaid
+sequenceDiagram
+    participant R1 as Request A
+    participant R2 as Request B
+    participant TR as TokenRefresher actor
+    participant Auth as Auth server
+    R1->>TR: 401 → validToken()
+    TR->>Auth: refresh (single in-flight Task)
+    R2->>TR: 401 → validToken()
+    Note over TR: B awaits the same Task
+    Auth-->>TR: new token
+    TR-->>R1: new token → retry
+    TR-->>R2: new token → retry
+```
 
 - Store tokens in the **Keychain**, never in UserDefaults.
 - Add `Authorization: Bearer <token>` in a request adapter or interceptor.

@@ -35,6 +35,14 @@ In UIKit, the `UIViewController` is **tightly coupled to its view** (it owns the
 
 **Model–View–ViewModel**: the **ViewModel** holds the presentation state and logic. It turns models into display-ready data (formatted strings, `isLoading`), handles user actions, and calls services. It **doesn't import UIKit** and doesn't reference the view, so it's unit-testable.
 
+```mermaid
+flowchart LR
+    V["View<br/>(SwiftUI / UIViewController)"] -->|"user actions"| VM["ViewModel<br/>@Observable, no UIKit"]
+    VM -->|"state (bindings)"| V
+    VM --> S["Service / Repository"]
+    S --> M["Model"]
+```
+
 Binding options:
 - **SwiftUI:** `@Observable` / `ObservableObject` (automatic).
 - **UIKit:** Combine (`@Published` + `sink`), closures (`var onStateChange: ((State) -> Void)?`), a custom `Observable<T>` box, RxSwift, or delegates.
@@ -83,6 +91,14 @@ VIPER splits each module (screen) into:
 - **E**ntity – plain data models.
 - **R**outer (Wireframe) – navigation and module assembly.
 
+```mermaid
+flowchart LR
+    V["View"] <-->|"events / display"| P["Presenter"]
+    P <-->|"use cases / results"| I["Interactor"]
+    I --> E["Entity"]
+    P -->|"navigate"| R["Router (Wireframe)"]
+```
+
 Pros: a very clear separation, highly testable, scales to big teams.
 Cons: **lots of boilerplate** (5+ files per screen and many protocols), and overkill for simple screens. It's less popular now with SwiftUI.
 
@@ -97,6 +113,13 @@ Layers with the **dependency rule** (dependencies point **inward**):
 - **Domain** (innermost) – entities, **use cases**, repository **protocols**. Pure Swift, with no UIKit or networking.
 - **Data** – repository implementations, API clients, persistence, DTOs and mappers.
 - **Presentation** – view models or presenters, and views.
+
+```mermaid
+flowchart TD
+    PR["Presentation<br/>ViewModels, Views"] -->|"depends on"| DO["Domain<br/>Entities, UseCases,<br/>Repository protocols"]
+    DA["Data<br/>Repository impl, API client, persistence"] -->|"implements protocols"| DO
+    PR -.->|"never directly"| DA
+```
 
 The data layer implements the domain's protocols (**Dependency Inversion**). You get testable business logic, swappable data sources and framework independence, at the cost of more layers and mapping code. It's often combined with MVVM and Coordinators ("Clean MVVM + C").
 
@@ -113,6 +136,16 @@ A Point-Free library implementing **unidirectional data flow** (inspired by Redu
 - **Reducer** – a pure function `(inout State, Action) -> Effect<Action>`.
 - **Effects** – side effects (API calls) that feed actions back into the system.
 - **Store** – runs the feature. **Dependencies** are managed with `@Dependency`.
+
+```mermaid
+flowchart LR
+    V["View"] -->|"send(Action)"| ST["Store"]
+    ST --> R["Reducer<br/>(inout State, Action)"]
+    R -->|"new State"| ST
+    R -->|"Effect"| EF["Side effect (API, timer)"]
+    EF -->|"feeds back an Action"| ST
+    ST -->|"State"| V
+```
 
 Pros: predictable state, excellent **exhaustive testing** (`TestStore` checks every state change), composition of features. Cons: a learning curve, a third-party dependency, and macro and compile-time overhead.
 
@@ -133,6 +166,17 @@ Pros: predictable state, excellent **exhaustive testing** (`TestStore` checks ev
 <summary>Answer</summary>
 
 Coordinators **own navigation**, so view controllers and view models don't know about the next screen. They create screens (with dependency injection), handle deep links, and manage flows (onboarding, auth, checkout). Combined with MVVM, this is often called **MVVM-C**. In SwiftUI, a `Router`/`Coordinator` `@Observable` object owns the `NavigationPath`. See [Design Patterns Q14](07-oop-solid-design-patterns.md).
+
+```mermaid
+flowchart TD
+    AC["AppCoordinator"] --> AUTH["AuthCoordinator"]
+    AC --> MAIN["MainCoordinator"]
+    AUTH --> LVC["LoginViewController + ViewModel"]
+    MAIN --> FVC["FeedViewController + ViewModel"]
+    MAIN --> DVC["DetailViewController + ViewModel"]
+    LVC -.->|"onLogin callback"| AUTH
+    AUTH -.->|"onFinish"| AC
+```
 
 </details>
 

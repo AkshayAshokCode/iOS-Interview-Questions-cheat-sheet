@@ -72,6 +72,18 @@ A `Task` is a unit of asynchronous work. It's how you start async work from a sy
 
 **Structured concurrency:** child tasks are tied to the scope that created them. The parent **waits** for all its children, **cancellation propagates** down to the children, and **errors propagate** up. No task outlives its scope.
 
+```mermaid
+flowchart TD
+    P["Parent task: loadProfile()"] --> A["async let user"]
+    P --> B["async let posts"]
+    P --> G["withTaskGroup"]
+    G --> G1["child: image 1"]
+    G --> G2["child: image 2"]
+    X["Parent cancelled"] -.->|"cancels all children"| P
+    B -.->|"error thrown → siblings cancelled"| P
+    P -->|"waits for every child"| R["Returns result"]
+```
+
 **`async let`** – a **fixed number** of concurrent children:
 ```swift
 async let user = api.user()
@@ -152,6 +164,19 @@ The compiler enforces this isolation, so it's like a serial queue that the compi
 <summary>Answer</summary>
 
 When an actor method hits an `await`, the actor can **run other calls** while it's suspended. State can **change across an await**:
+
+```mermaid
+sequenceDiagram
+    participant T1 as Task 1
+    participant A as BankAccount actor
+    participant T2 as Task 2
+    T1->>A: withdraw(80) — balance 100 ✅ check passes
+    A->>A: await audit() (suspends)
+    T2->>A: withdraw(80) — balance still 100 ✅
+    A->>A: balance -= 80 → 20
+    A->>A: T1 resumes: balance -= 80 → -60 ❌
+    Note over A: re-check state after every await
+```
 
 ```swift
 actor BankAccount {

@@ -57,6 +57,14 @@ Prefer **modifiers with conditional values** (`.opacity(isOn ? 1 : 0)`) over `if
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart LR
+    AP["View identity appears<br/>@State created"] --> OA["onAppear / .task starts"]
+    OA --> UP["body re-evaluated<br/>when dependencies change"]
+    UP --> UP
+    UP --> DIS["Identity removed<br/>onDisappear / .task cancelled<br/>@State destroyed"]
+```
+
 - **Lifetime of identity**: from when a view with a given identity appears in the hierarchy until it's removed. `@State` lives for that duration.
 - `onAppear` / `onDisappear` – called when the view appears or disappears (they can run multiple times, e.g. in tabs or navigation).
 - **`.task { }`** – starts async work on appear and **cancels it automatically on disappear**. `.task(id: value)` restarts when the value changes.
@@ -153,6 +161,14 @@ Advantages over `ObservableObject` + `@Published`:
 <summary>Answer</summary>
 
 Every piece of data has **one owner** (the source of truth), and everyone else reads it or gets a **binding** to it. Data flows **down** (properties, environment), and changes flow **up** (bindings, closures, model methods). Duplicating state (copying a value into a child's `@State`) causes things to go out of sync. Keep the state as high as needed, and as low as possible.
+
+```mermaid
+flowchart TD
+    M["@Observable model / @State<br/>(source of truth)"] -->|"data flows down"| P["Parent view"]
+    P -->|"value / $binding"| C["Child view"]
+    C -->|"binding writes / closures"| M
+    ENV["@Environment"] -.->|"implicit, down the tree"| C
+```
 
 </details>
 

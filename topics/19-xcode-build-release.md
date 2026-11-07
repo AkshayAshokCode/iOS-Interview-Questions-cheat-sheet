@@ -59,6 +59,16 @@ Code signing proves **who built the app** and that it **hasn't been modified**. 
 - **Entitlements** – the capabilities the binary requests (push, App Groups, iCloud, Keychain sharing, Associated Domains).
 - **Provisioning profile** – ties these together: **certificate(s) + App ID + entitlements + devices** (for development and Ad Hoc). Types: Development, Ad Hoc, App Store, Enterprise (in-house).
 
+```mermaid
+flowchart TD
+    CERT["Certificate<br/>(who signs)"] --> PP["Provisioning profile"]
+    AID["App ID / bundle ID<br/>+ capabilities"] --> PP
+    ENT["Entitlements"] --> PP
+    DEV["Device list<br/>(development / ad hoc)"] --> PP
+    PP --> SIGN["Codesign the app"]
+    SIGN --> IOS["iOS verifies signature,<br/>profile, entitlements at install"]
+```
+
 At install time, iOS checks the signature, profile and entitlements. Use **automatic signing** for small teams, or **fastlane match** / manual signing in CI.
 
 </details>
@@ -128,6 +138,17 @@ Apple reviews against the **App Store Review Guidelines**: safety, performance, 
 <summary>Answer</summary>
 
 Tools: **Xcode Cloud**, GitHub Actions (macOS runners), Bitrise, CircleCI, Jenkins, plus **fastlane** for automation.
+
+```mermaid
+flowchart LR
+    PR["Pull request"] --> LINT["SwiftLint"]
+    LINT --> UT["Unit + snapshot tests"]
+    UT --> M["Merge to main"]
+    M --> AR["Archive + sign (match / API key)"]
+    AR --> TF["Upload to TestFlight"]
+    TF --> RV["App Review"]
+    RV --> PH["Phased release (7 days)"]
+```
 
 On every PR: SwiftLint/SwiftFormat → build → **unit tests** (+ coverage) → snapshot tests → UI tests (maybe nightly) → static analysis.
 On merge or tag: bump the build number → archive with **signing from match** or App Store Connect API keys → upload to **TestFlight** (`fastlane pilot`) → upload dSYMs to the crash reporter → release notes → submit for review (`deliver`) → phased release.

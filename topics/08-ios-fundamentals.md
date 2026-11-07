@@ -11,6 +11,18 @@ Covers: app states & lifecycle, AppDelegate vs SceneDelegate, SwiftUI App lifecy
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    NR(["Not running"]) -->|"launch"| IN["Inactive"]
+    IN --> AC["Active (foreground)"]
+    AC -->|"call / Control Center"| IN
+    IN -->|"home / app switch"| BG["Background"]
+    BG -->|"returns"| IN
+    BG -->|"no more work"| SU["Suspended (in memory)"]
+    SU -->|"user returns"| BG
+    SU -.->|"memory pressure, no notice"| NR
+```
+
 - **Not running** – not launched, or terminated.
 - **Inactive** – in the foreground but **not receiving events**: a transitional state (an incoming call, Control Center pulled down, app switching).
 - **Active** – in the foreground and receiving events.
@@ -74,6 +86,17 @@ struct MyApp: App {
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    T["Tap icon"] --> K["Kernel creates process"]
+    K --> D["dyld loads dylibs, rebases,<br/>runs static initializers"]
+    D --> M["main() → UIApplicationMain"]
+    M --> AD["didFinishLaunchingWithOptions"]
+    AD --> SC["Scene connects → window + root VC"]
+    SC --> VL["viewDidLoad → layout"]
+    VL --> F["First frame rendered ✅"]
+```
+
 1. The user taps the icon; **SpringBoard** asks the system to launch the app process.
 2. The kernel creates the process. **dyld** loads the executable and **dynamic libraries/frameworks**, rebases and binds symbols, and runs static initializers (ObjC `+load`, C++ constructors).
 3. `main()` runs → `UIApplicationMain` creates `UIApplication` and the AppDelegate, and starts the **main run loop**.
@@ -122,6 +145,17 @@ Sharing between your own apps and extensions: **App Groups** (shared container +
 <summary>Answer</summary>
 
 The responder chain is a chain of `UIResponder` objects (views, view controllers, window, application) that **events travel through**. A touch first goes through **hit-testing** (`hitTest(_:with:)` / `point(inside:)` find the deepest view under the touch), which becomes the first responder for that touch. If that view doesn't handle an event, the event is passed to its `next` responder: superview → view controller → window → `UIApplication` → AppDelegate.
+
+```mermaid
+flowchart TD
+    T["Touch"] --> HT["Hit-testing finds deepest view"]
+    HT --> V["UIView (first responder)"]
+    V -->|"not handled"| SV["Superview"]
+    SV -->|"not handled"| VC["UIViewController"]
+    VC -->|"not handled"| W["UIWindow"]
+    W -->|"not handled"| A["UIApplication"]
+    A -->|"not handled"| AD["AppDelegate"]
+```
 
 Also used for: **first responder** handling (the keyboard, `becomeFirstResponder`/`resignFirstResponder`), actions sent to a `nil` target, `UIKeyCommand`s, and edit menus.
 

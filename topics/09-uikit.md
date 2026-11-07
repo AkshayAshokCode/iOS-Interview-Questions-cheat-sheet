@@ -13,6 +13,20 @@ Covers: view controller lifecycle, view lifecycle & rendering, Auto Layout, UITa
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    I["init"] --> LV["loadView()"]
+    LV --> VDL["viewDidLoad() — once"]
+    VDL --> VWA["viewWillAppear()"]
+    VWA --> VIA["viewIsAppearing() — geometry ready"]
+    VIA --> LS["viewWillLayoutSubviews / viewDidLayoutSubviews"]
+    LS --> VDA["viewDidAppear()"]
+    VDA --> VWD["viewWillDisappear()"]
+    VWD --> VDD["viewDidDisappear()"]
+    VDD -->|"shown again"| VWA
+    VDD --> DE["deinit"]
+```
+
 1. `init(coder:)` / `init(nibName:bundle:)` – created (from a storyboard or in code).
 2. `loadView()` – creates `self.view`. Override it only to provide a custom root view in code (and don't call super then).
 3. **`viewDidLoad()`** – called **once** after the view is loaded into memory. One-time setup: subviews, constraints, bindings, initial data loading.
@@ -89,6 +103,17 @@ On each run loop iteration, before rendering, UIKit performs three passes:
 1. **Update constraints** – `updateConstraints()` (bottom-up). Triggered by `setNeedsUpdateConstraints()`.
 2. **Layout** – `layoutSubviews()` (top-down) sets the frames. Triggered by `setNeedsLayout()` (deferred to the next cycle) or `layoutIfNeeded()` (**immediately**, often used inside animation blocks).
 3. **Display** – `draw(_:)` for custom drawing. Triggered by `setNeedsDisplay()`.
+
+```mermaid
+flowchart LR
+    E["Run loop iteration"] --> UC["1. Update constraints<br/>updateConstraints()"]
+    UC --> L["2. Layout<br/>layoutSubviews()"]
+    L --> D["3. Display<br/>draw(_:)"]
+    D --> CA["Core Animation commit → render server"]
+    SNC["setNeedsUpdateConstraints()"] -.-> UC
+    SNL["setNeedsLayout() / layoutIfNeeded()"] -.-> L
+    SND["setNeedsDisplay()"] -.-> D
+```
 
 Then Core Animation commits the layer tree to the **render server**, which composites it on the GPU. You never call `layoutSubviews()` or `draw(_:)` directly.
 
@@ -207,6 +232,18 @@ Auto Layout has a solver cost (much improved since iOS 12, roughly linear for in
 <summary>Answer</summary>
 
 Instead of creating a cell for each row, the table view keeps a **reuse queue** per identifier. Cells that scroll off-screen go into the queue, and `dequeueReusableCell(withIdentifier:for:)` returns a recycled cell (or creates one). Memory stays proportional to the **visible** rows.
+
+```mermaid
+flowchart TD
+    S["Cell scrolls off screen"] --> Q[("Reuse queue (per identifier)")]
+    N["Row needs a cell"] --> DQ["dequeueReusableCell(withIdentifier:for:)"]
+    DQ --> H{"Queue has one?"}
+    H -->|"yes"| PR["prepareForReuse() → reset state"]
+    H -->|"no"| NEW["Create new cell"]
+    PR --> CF["Configure with row data"]
+    NEW --> CF
+    Q --> H
+```
 
 Pitfalls: **reset all state** in `prepareForReuse()` or during configuration (images, hidden flags, selection), and cancel async image loads so a reused cell doesn't show the wrong image (check the identifier when the image arrives, or cancel the task in `prepareForReuse`).
 

@@ -76,6 +76,17 @@ Core Data is an **object graph and persistence framework**, not a database. It m
 <details>
 <summary>Answer</summary>
 
+```mermaid
+flowchart TD
+    PC["NSPersistentContainer"] --> MOM["NSManagedObjectModel<br/>(.xcdatamodeld schema)"]
+    PC --> PSC["NSPersistentStoreCoordinator"]
+    PSC --> ST[("SQLite store")]
+    PC --> VC["viewContext (main queue)"]
+    PC --> BC["background contexts"]
+    VC --> PSC
+    BC --> PSC
+```
+
 - **NSManagedObjectModel** – the schema (`.xcdatamodeld`): entities, attributes, relationships.
 - **NSPersistentStoreCoordinator** – connects the model to the persistent store(s) (SQLite).
 - **NSManagedObjectContext** – a "scratchpad" where you create, fetch, modify and delete objects, then **`save()`** to persist the changes.
@@ -91,6 +102,15 @@ Core Data is an **object graph and persistence framework**, not a database. It m
 **Managed objects and contexts are not thread-safe.** Each context is bound to a queue:
 - `viewContext` – main queue, for the UI.
 - Background contexts – private queue, for imports and heavy work.
+
+```mermaid
+flowchart TD
+    BG["Background context<br/>perform { import + save() }"] --> PSC["Persistent store coordinator"]
+    PSC --> DB[("SQLite")]
+    PSC -->|"automaticallyMergesChangesFromParent"| VC["viewContext (main)"]
+    VC --> UI["UI updates (FRC / @FetchRequest)"]
+    ID["Pass NSManagedObjectID between contexts,<br/>never the object"] -.-> BG
+```
 
 Rules:
 - Access a context only inside **`perform { }` / `performAndWait { }`** (or `await context.perform { }`).
