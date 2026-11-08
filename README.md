@@ -1,6 +1,6 @@
 # iOS Interview Questions – Cheat Sheet
 
-A revision guide for iOS developer interviews: **490+ questions with interview-ready answers**, split into 24 topics. It covers Swift, concurrency, UIKit and SwiftUI, architecture, system design and what's new in iOS 26 and Swift 6.
+A revision guide for iOS developer interviews: **510+ questions with interview-ready answers**, split into 25 topics. It covers Swift, concurrency, UIKit and SwiftUI, architecture, system design and what's new in iOS 26 and Swift 6.
 
 Every answer is hidden in a collapsible block, so you can **test yourself first** and then click to check.
 
@@ -82,6 +82,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 20 | [iOS System Design](topics/20-system-design.md) | 16 | Framework + designs: image cache, feed, chat, offline sync, downloader, analytics SDK |
 | 21 | [What's New & Trending](topics/21-whats-new-trending.md) | 17 | iOS 17/18/26, Liquid Glass, Foundation Models, App Intents, Swift 6.2, policies |
 | 22 | [Coding, Scenarios & Behavioral](topics/22-coding-scenarios.md) | 24 | LRU cache, debounce, parallel fetch, find-the-bug, STAR answers |
+| 25 | [Company-Wise Questions](topics/25-company-wise-questions.md) | 23 | What Apple, Google, Meta, Amazon, Uber, Netflix and Indian product companies ask; machine coding; UPI app, quick commerce, Live Activity tracking, super-app, Reels-style feed |
 
 ---
 
@@ -104,7 +105,7 @@ Every answer is hidden in a collapsible block, so you can **test yourself first*
 | 11 | 15 Background & Notifications + 16 Performance |
 | 12 | 17 Testing + 18 Security & Privacy |
 | 13 | 19 Build & Release + 20 System Design |
-| 14 | 21 What's New + 22 Coding & Behavioral + Last-Minute Revision |
+| 14 | 21 What's New + 22 Coding & Behavioral + 25 Company-Wise (your target companies) + Last-Minute Revision |
 
 **2 days before:** Struct vs class, ARC (03), Swift Concurrency (05), SwiftUI (10), UIKit lifecycle (09), Architecture (11), System Design (20) and the list below.
 
