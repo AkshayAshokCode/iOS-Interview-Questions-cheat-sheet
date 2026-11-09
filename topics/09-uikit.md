@@ -542,6 +542,30 @@ Since iOS 10, UIColor supports **extended-range sRGB**. Components **below 0 or 
 
 </details>
 
+### 40. How does hit-testing work in UIKit? How do you enlarge a button's tap area?
+
+<details>
+<summary>Answer</summary>
+
+When a touch begins, UIKit finds the view to receive it with **hit-testing**: starting at the window, `hitTest(_:with:)` checks `point(inside:with:)` and recurses into subviews **in reverse order** (front-most first). The deepest view containing the point becomes the **hit-test view**, which receives the touch events; unhandled events then travel up the **responder chain**.
+
+A view is skipped if it's hidden, has `isUserInteractionEnabled = false`, or alpha < 0.01. Touches outside a parent's bounds don't reach its subviews even if they're drawn there (`clipsToBounds = false`).
+
+**Enlarging a tap area** (to meet the 44 × 44 pt guideline without changing the visuals):
+
+```swift
+class LargeTapButton: UIButton {
+    var extraInset: CGFloat = 12
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        bounds.insetBy(dx: -extraInset, dy: -extraInset).contains(point)
+    }
+}
+```
+
+Other uses of overriding `hitTest`: letting touches pass through a transparent overlay (return `nil` when the hit view is the overlay itself), or making a subview that extends outside its parent tappable. In SwiftUI, use `.contentShape(Rectangle())` and padding to control the tappable area.
+
+</details>
+
 ---
 
 [⬅ Previous: iOS Fundamentals](08-ios-fundamentals.md) · [⬅ Back to index](../README.md) · [Next: SwiftUI ➡](10-swiftui.md)
